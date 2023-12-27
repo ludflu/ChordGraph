@@ -3,6 +3,7 @@
 
 module Main where
 
+import Data.Function (on)
 import Data.Graph.Inductive
 import Data.GraphViz
 import Data.GraphViz.Attributes.Complete
@@ -100,19 +101,12 @@ intervalEdges toneMat (x, y) =
         intervals = catMaybes [raiseFifth, raiseMajorThird, lowerMinorThird]
      in return $ map (\(note, loc') -> (loc, loc')) intervals
 
--- map
--- (\(x, y) -> getNote toneMatrix x y )
--- coordinates
+allNotes =
+  let notefetcher = getNote toneMatrix
+      onlynotes = mapMaybe notefetcher coordinates
+   in map snd onlynotes
 
-rotate :: Int -> [a] -> [a]
-rotate _ [] = []
-rotate n xs = zipWith const (drop n (cycle xs)) xs
-
-trows =
-  let offsets = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0]
-      scale = reverse [0 .. 11]
-      scales = repeat scale
-   in zipWith (\o s -> (rotate o s)) offsets scales
+allEdges = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) coordinates
 
 ex1 :: Gr L.Text L.Text
 ex1 =
