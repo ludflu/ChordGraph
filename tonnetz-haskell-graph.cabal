@@ -36,5 +36,6 @@ executable tonnetz-haskell-graph
                      ,graphviz
                      ,fgl
                      ,filepath
+                     ,matrix
     hs-source-dirs:   app
     default-language: Haskell2010

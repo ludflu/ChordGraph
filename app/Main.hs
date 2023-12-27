@@ -9,7 +9,9 @@ import Data.GraphViz.Attributes.Complete
 import Data.GraphViz.Types.Generalised as G
 import Data.GraphViz.Types.Monadic
 import Data.Hashable
-import Data.List as DL
+import qualified Data.List as DL
+import qualified Data.Matrix as M
+import Data.Maybe
 import qualified Data.Text.Lazy as L
 import Data.Word
 import WriteRunDot
@@ -53,12 +55,54 @@ alternatePad = DL.intersperse 255
 
 surroundPad xs = 255 : xs ++ [255]
 
-interleave xs ys = concat (transpose [xs, ys])
+interleave xs ys = concat (DL.transpose [xs, ys])
 
-padded =
+fifth :: (Int, Int) -> (Int, Int)
+fifth (x, y) = (x + 2, y)
+
+fifth' :: (Int, Int) -> (Int, Int)
+fifth' (x, y) = (x - 2, y)
+
+majorThird :: (Int, Int) -> (Int, Int)
+majorThird (x, y) = (x - 1, y - 1)
+
+majorThird' :: (Int, Int) -> (Int, Int)
+majorThird' (x, y) = (x + 1, y + 1)
+
+minorThird :: (Int, Int) -> (Int, Int)
+minorThird (x, y) = (x - 1, y + 1)
+
+minorThird' :: (Int, Int) -> (Int, Int)
+minorThird' (x, y) = (x + 1, y - 1)
+
+toneMatrix :: M.Matrix Int
+toneMatrix =
   let es = map alternatePad $ evens netlines
       os = map (surroundPad . alternatePad) $ odds netlines
-   in interleave es os
+      matdata = interleave es os
+   in M.fromLists matdata
+
+coordinates :: [(Int, Int)]
+coordinates = concat [[(i, j) | j <- [1 .. 25]] | i <- [1 .. 25]]
+
+getNote :: M.Matrix Int -> (Int, Int) -> Maybe (Int, (Int, Int))
+getNote toneMat (x, y) =
+  let f = M.safeGet x y toneMat
+   in if f == Just 255 then Nothing else fmap (\i -> (i, (x, y))) f
+
+intervalEdges :: M.Matrix Int -> (Int, Int) -> Maybe [((Int, Int), (Int, Int))]
+intervalEdges toneMat (x, y) =
+  do
+    (focus, loc) <- getNote toneMat (x, y)
+    let raiseFifth = getNote toneMat (fifth (x, y))
+        raiseMajorThird = getNote toneMat (majorThird (x, y))
+        lowerMinorThird = getNote toneMat (minorThird (x, y))
+        intervals = catMaybes [raiseFifth, raiseMajorThird, lowerMinorThird]
+     in return $ map (\(note, loc') -> (loc, loc')) intervals
+
+-- map
+-- (\(x, y) -> getNote toneMatrix x y )
+-- coordinates
 
 rotate :: Int -> [a] -> [a]
 rotate _ [] = []
