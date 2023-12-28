@@ -1,16 +1,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
 module Main where
 
+import Data.Data (Typeable)
 import Data.Function (on)
-import Data.Graph.Inductive
 import Data.Graph.Inductive (Graph (mkGraph))
-import Data.GraphViz
-import Data.GraphViz (blankParams, nonClusteredParams)
-import Data.GraphViz.Attributes.Complete
-import Data.GraphViz.Types.Generalised as G
-import Data.GraphViz.Types.Monadic
 import Data.Hashable
 import Data.Int (Int)
 import qualified Data.List as DL
@@ -19,7 +16,8 @@ import Data.Maybe
 import qualified Data.Text.Lazy as L
 import Data.Tuple
 import Data.Word
-import WriteRunDot
+import Diagrams.Backend.SVG.CmdLine
+import Diagrams.Prelude
 
 netlines :: [[Int]]
 netlines =
@@ -90,9 +88,6 @@ toneMatrix =
       matdata = interleave es os
    in M.fromLists matdata
 
-coordinates :: [(Int, Int)]
-coordinates = concat [[(i, j) | j <- [1 .. 25]] | i <- [1 .. 25]]
-
 getNote :: M.Matrix Int -> (Int, Int) -> Maybe ((Int, Int), Int)
 getNote toneMat (x, y) =
   let f = M.safeGet x y toneMat
@@ -108,80 +103,29 @@ intervalEdges toneMat (x, y) =
         intervals = catMaybes [raiseFifth, raiseMajorThird, lowerMinorThird]
      in return $ map (\(loc', note) -> (loc, loc')) intervals
 
-allNotes :: [(Int, L.Text)]
-allNotes =
-  let notefetcher = getNote toneMatrix
-      ns = mapMaybe (notefetcher) coordinates
-   in map (\(a, b) -> (mkIndex a, L.pack $ show b)) ns
+-- allNotes :: [(Int, L.Text)]
+-- allNotes =
+--   let notefetcher = getNote toneMatrix
+--       ns = mapMaybe (notefetcher) coordinates
+--    in map (\(a, b) -> (mkIndex a, L.pack $ show b)) ns
 
-allEdges :: [(Int, Int, L.Text)]
-allEdges =
-  let es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) coordinates
-   in map (\(a, b) -> (mkIndex a, mkIndex b, "255")) es
+-- allEdges :: [(Int, Int, L.Text)]
+-- allEdges =
+--   let es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) coordinates
+--    in map (\(a, b) -> (mkIndex a, mkIndex b, "255")) es
 
-toneGraph :: Gr L.Text L.Text
-toneGraph =
-  mkGraph allNotes allEdges
+-- coordinates :: [(Int, Int)]
+coordinates :: (Fractional a, Enum a) => [(a, a)]
+coordinates = concat [[(i, j) | j <- [1.0 .. 25.0]] | i <- [1.0 .. 25.0]]
 
-ex1 :: Gr L.Text L.Text
-ex1 =
-  mkGraph
-    [ (1, "A"),
-      (2, "B"),
-      (3, "C"),
-      (4, "D"),
-      (5, "E"),
-      (6, "F"),
-      (7, "G")
-    ]
-    [(1, 3, "edge label")]
+points = map p2 coordinates
 
-ex1Params :: GraphvizParams n L.Text L.Text () L.Text
-ex1Params =
-  nonClusteredParams
-    { globalAttributes = ga,
-      fmtNode = fn,
-      fmtEdge = fe
-    }
-  where
-    fn (_, l) = [textLabel l]
-    fe (_, _, l) = [textLabel l]
+circleAtPoint :: (Double, Double) -> Diagram B
+circleAtPoint (x, y) = circle 1 # fc blue # translate (r2 (x, y))
 
-    ga =
-      [ GraphAttrs
-          [ RankDir FromLeft,
-            BgColor [toWColor White]
-          ],
-        NodeAttrs
-          [ shape BoxShape,
-            FillColor (myColorCL 2),
-            style filled
-          ]
-      ]
+cs = map circleAtPoint coordinates
 
--- http://www.colorcombos.com/color-schemes/2025/ColorCombo2025.html
-myColorCL :: Word8 -> ColorList
-myColorCL n
-  | n == 1 = c $ (RGB 127 108 138)
-  | n == 2 = c $ (RGB 175 177 112)
-  | n == 3 = c $ (RGB 226 206 179)
-  | n == 4 = c $ (RGB 172 126 100)
-  where
-    c rgb = toColorList [rgb]
-
-myColor :: Word8 -> Attribute
-myColor n = Color $ myColorCL n
+field = position $ zip points cs
 
 main :: IO ()
-main =
-  let dotGraph = graphToDot ex1Params toneGraph
-   in do writeFile "output.dot" (L.unpack $ printDotGraph dotGraph)
-
--- main :: IO ()
--- main = doDots [("toneGraph", graphToDot ex1Params toneGraph)]
-
---  doDots [("ex1", graphToDot ex1Params ex1)]
-
---   doDots
---     [ ("ex3", ex3)
---     ]
+main = mainWith field
