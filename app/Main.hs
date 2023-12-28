@@ -103,6 +103,11 @@ intervalEdges toneMat (x, y) =
         intervals = catMaybes [raiseFifth, raiseMajorThird, lowerMinorThird]
      in return $ map (\(loc', note) -> (loc, loc')) intervals
 
+allNotes :: [((Int, Int), Int)]
+allNotes =
+  let notefetcher = getNote toneMatrix
+   in mapMaybe notefetcher intcords
+
 -- allNotes :: [(Int, L.Text)]
 -- allNotes =
 --   let notefetcher = getNote toneMatrix
@@ -114,16 +119,29 @@ intervalEdges toneMat (x, y) =
 --   let es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) coordinates
 --    in map (\(a, b) -> (mkIndex a, mkIndex b, "255")) es
 
--- coordinates :: [(Int, Int)]
 coordinates :: (Fractional a, Enum a) => [(a, a)]
 coordinates = concat [[(i, j) | j <- [1.0 .. 25.0]] | i <- [1.0 .. 25.0]]
 
-points = map p2 coordinates
+floorTuple :: (RealFrac a, Enum a) => (a, a) -> (Int, Int)
+floorTuple (x, y) = (floor x, floor y)
+
+realTuple :: (RealFrac a, Enum a) => (Int, Int) -> (a, a)
+realTuple (x, y) = (fromIntegral x, fromIntegral y)
+
+intcords :: [(Int, Int)]
+intcords = map floorTuple coordinates
+
+justNotes :: (RealFrac a, Enum a) => [(a, a)]
+justNotes =
+  let ns = map fst allNotes
+   in map realTuple ns
+
+points = map p2 justNotes
 
 circleAtPoint :: (Double, Double) -> Diagram B
 circleAtPoint (x, y) = circle 1 # fc blue # translate (r2 (x, y))
 
-cs = map circleAtPoint coordinates
+cs = map circleAtPoint justNotes
 
 field = position $ zip points cs
 
