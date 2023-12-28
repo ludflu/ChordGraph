@@ -5,15 +5,19 @@ module Main where
 
 import Data.Function (on)
 import Data.Graph.Inductive
+import Data.Graph.Inductive (Graph (mkGraph))
 import Data.GraphViz
+import Data.GraphViz (blankParams, nonClusteredParams)
 import Data.GraphViz.Attributes.Complete
 import Data.GraphViz.Types.Generalised as G
 import Data.GraphViz.Types.Monadic
 import Data.Hashable
+import Data.Int (Int)
 import qualified Data.List as DL
 import qualified Data.Matrix as M
 import Data.Maybe
 import qualified Data.Text.Lazy as L
+import Data.Tuple
 import Data.Word
 import WriteRunDot
 
@@ -76,6 +80,9 @@ minorThird (x, y) = (x - 1, y + 1)
 minorThird' :: (Int, Int) -> (Int, Int)
 minorThird' (x, y) = (x + 1, y - 1)
 
+mkIndex :: (Int, Int) -> Int
+mkIndex (x, y) = y * 25 + x
+
 toneMatrix :: M.Matrix Int
 toneMatrix =
   let es = map alternatePad $ evens netlines
@@ -86,27 +93,35 @@ toneMatrix =
 coordinates :: [(Int, Int)]
 coordinates = concat [[(i, j) | j <- [1 .. 25]] | i <- [1 .. 25]]
 
-getNote :: M.Matrix Int -> (Int, Int) -> Maybe (Int, (Int, Int))
+getNote :: M.Matrix Int -> (Int, Int) -> Maybe ((Int, Int), Int)
 getNote toneMat (x, y) =
   let f = M.safeGet x y toneMat
-   in if f == Just 255 then Nothing else fmap (\i -> (i, (x, y))) f
+   in if f == Just 255 then Nothing else fmap (\i -> ((x, y), i)) f
 
 intervalEdges :: M.Matrix Int -> (Int, Int) -> Maybe [((Int, Int), (Int, Int))]
 intervalEdges toneMat (x, y) =
   do
-    (focus, loc) <- getNote toneMat (x, y)
+    (loc, focus) <- getNote toneMat (x, y)
     let raiseFifth = getNote toneMat (fifth (x, y))
         raiseMajorThird = getNote toneMat (majorThird (x, y))
         lowerMinorThird = getNote toneMat (minorThird (x, y))
         intervals = catMaybes [raiseFifth, raiseMajorThird, lowerMinorThird]
-     in return $ map (\(note, loc') -> (loc, loc')) intervals
+     in return $ map (\(loc', note) -> (loc, loc')) intervals
 
+allNotes :: [(Int, L.Text)]
 allNotes =
   let notefetcher = getNote toneMatrix
-      onlynotes = mapMaybe notefetcher coordinates
-   in map snd onlynotes
+      ns = mapMaybe (notefetcher) coordinates
+   in map (\(a, b) -> (mkIndex a, L.pack $ show b)) ns
 
-allEdges = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) coordinates
+allEdges :: [(Int, Int, L.Text)]
+allEdges =
+  let es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) coordinates
+   in map (\(a, b) -> (mkIndex a, mkIndex b, "255")) es
+
+toneGraph :: Gr L.Text L.Text
+toneGraph =
+  mkGraph allNotes allEdges
 
 ex1 :: Gr L.Text L.Text
 ex1 =
@@ -158,8 +173,14 @@ myColor :: Word8 -> Attribute
 myColor n = Color $ myColorCL n
 
 main :: IO ()
-main = do
-  doDots [("ex1", graphToDot ex1Params ex1)]
+main =
+  let dotGraph = graphToDot ex1Params toneGraph
+   in do writeFile "output.dot" (L.unpack $ printDotGraph dotGraph)
+
+-- main :: IO ()
+-- main = doDots [("toneGraph", graphToDot ex1Params toneGraph)]
+
+--  doDots [("ex1", graphToDot ex1Params ex1)]
 
 --   doDots
 --     [ ("ex3", ex3)
