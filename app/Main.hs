@@ -8,9 +8,11 @@ module Main where
 import Data.Data (Typeable)
 import Data.Function (on)
 import Data.Graph.Inductive (Graph (mkGraph))
+import Data.GraphViz (fontColor)
 import Data.Hashable
 import Data.Int (Int)
 import qualified Data.List as DL
+import qualified Data.Map as Map
 import qualified Data.Matrix as M
 import Data.Maybe
 import qualified Data.Text.Lazy as L
@@ -47,6 +49,11 @@ netlines =
     [4, 11, 6, 1, 8, 3, 10, 5, 0, 7, 2, 9],
     [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0]
   ]
+
+noteMap :: Map.Map Int String
+noteMap =
+  let notes = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]
+   in Map.fromList $ zip [0 .. 11] notes
 
 evens :: [a] -> [a]
 evens xs = [x | (x, index) <- zip xs [0 ..], even index]
@@ -139,7 +146,11 @@ justNotes =
 points = map p2 justNotes
 
 circleAtPoint :: (Double, Double) -> Diagram B
-circleAtPoint (x, y) = circle 1 # fc blue # translate (r2 (x, y))
+circleAtPoint (x, y) =
+  ( circle 1
+      <> (center $ text "Hi")
+  )
+    # translate (r2 (x, y))
 
 cs = map circleAtPoint justNotes
 
