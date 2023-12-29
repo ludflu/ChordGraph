@@ -112,7 +112,7 @@ intervalEdges toneMat (x, y) =
 
 allNotes :: [((Int, Int), Int)]
 allNotes =
-  let notefetcher = getNote toneMatrix
+  let notefetcher = getNote $ M.transpose toneMatrix
    in mapMaybe notefetcher intcords
 
 -- allNotes :: [(Int, L.Text)]
@@ -140,7 +140,7 @@ intcords = map floorTuple coordinates
 
 justNotes :: (RealFrac a, Enum a) => [((a, a), Int)]
 justNotes =
-  map (\((x, y), n) -> (realTuple (x, y), n)) allNotes
+  map (\(xy, n) -> (realTuple xy, n)) allNotes
 
 points =
   let pts = map fst justNotes
@@ -148,10 +148,11 @@ points =
 
 circleAtPoint :: ((Double, Double), Int) -> Diagram B
 circleAtPoint ((x, y), n) =
-  ( circle 1
-      <> (center $ text $ show n)
-  )
-    # translate (r2 (x, y))
+  let noteName = noteMap Map.! n
+   in ( circle 0.75
+          <> (center $ text $ noteName)
+      )
+        # translate (r2 (x, y))
 
 cs = map circleAtPoint justNotes
 
