@@ -11,7 +11,7 @@ import Data.Data (Typeable)
 
 -- import Data.Graph.Inductive.PatriciaTree (Gr)
 
-import Data.Graph.Inductive (Edge, Graph (mkGraph), Node, edges, neighbors)
+import Data.Graph.Inductive (Edge, Gr, Graph (mkGraph), Node, edges, neighbors)
 import Data.Hashable
 import Data.Int (Int)
 import qualified Data.List as DL
@@ -27,6 +27,8 @@ import Diagrams.Prelude
 type NodeLabel = (Int, Int)
 
 type EdgeLabel = Int
+
+type NoteGraph = Gr NodeLabel EdgeLabel
 
 netlines :: [[Int]]
 netlines =
@@ -157,7 +159,7 @@ toneGraph =
       edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, 0)) es
    in mkGraph nodes edges
 
-commonNeighbors :: Graph gr => gr NodeLabel EdgeLabel -> Edge -> [Int]
+commonNeighbors :: NoteGraph -> Edge -> [Int]
 commonNeighbors g (from, to) =
   let n1 = neighbors g from
       n2 = neighbors g to
@@ -167,7 +169,7 @@ makeThreeTuples :: Edge -> [Int] -> [(Int, Int, Int)]
 makeThreeTuples (a, b) ns = map (\x -> (a, b, x)) ns
 
 -- given a graph, will return all the 3-cliques
-threeClicks :: Graph gr => gr NodeLabel EdgeLabel -> [(Int, Int, Int)]
+threeClicks :: NoteGraph -> [(Int, Int, Int)]
 threeClicks g =
   let es = edges g
       ns = map (\edge -> (edge, commonNeighbors g edge)) es
@@ -180,7 +182,7 @@ threeClicks g =
 -- 5. sort each 3-tuple by value
 -- 6. dedupe the list
 
-myNeighbors :: Graph gr => gr NodeLabel EdgeLabel -> NodeLabel -> [NodeLabel]
+myNeighbors :: NoteGraph -> NodeLabel -> [NodeLabel]
 myNeighbors tg i =
   let i' = nodeLookup Map.! i
       ns = neighbors tg i'
