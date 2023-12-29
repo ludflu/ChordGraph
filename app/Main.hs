@@ -8,8 +8,10 @@ module Main where
 
 import Data.Data (Typeable)
 -- import Data.Function (on)
-import Data.Graph.Inductive (Graph (mkGraph), neighbors)
+
 -- import Data.Graph.Inductive.PatriciaTree (Gr)
+
+import Data.Graph.Inductive (Edge, Graph (mkGraph), Node, edges, neighbors)
 import Data.Hashable
 import Data.Int (Int)
 import qualified Data.List as DL
@@ -150,6 +152,26 @@ toneGraph =
       es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) intcords
       edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, b)) es
    in mkGraph nodes edges
+
+commonNeighbors :: Graph gr => gr (Int, Int) (Int, Int) -> Edge -> [Node]
+commonNeighbors g (from, to) =
+  let n1 = neighbors g from
+      n2 = neighbors g to
+   in DL.intersect n1 n2
+
+-- given a graph, will return all the 3-cliques
+-- threeClicks :: Graph gr => gr (Int, Int) (Int, Int) -> [(Int, Int, Int)]
+-- threeClicks g =
+--   let es = edges g
+--       ns = map (\(x, y) -> (commonNeighbors g (x, y), (x, y))) es
+--    in []
+
+-- 1. for each edge in the graph
+-- 2. for both vertices in the edge
+-- 3. find the neighbor vertices in common
+-- 4 for each neighbor vertex in common, record a 3-tuple of the vertices in the edge + the common neighbor
+-- 5. sort each 3-tuple by value
+-- 6. dedupe the list
 
 myNeighbors :: Graph gr => gr (Int, Int) (Int, Int) -> (Int, Int) -> [(Int, Int)]
 myNeighbors tg i =

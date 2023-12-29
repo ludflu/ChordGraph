@@ -29,16 +29,16 @@ executable tonnetz-haskell-graph
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    other-modules:    WriteRunDot
+--    other-modules:    WriteRunDot
     build-depends:    base ^>=4.16.4.0
                      ,containers
                      ,hashable
                      ,text
-                     ,graphviz
                      ,fgl
                      ,filepath
                      ,matrix
                      ,diagrams-lib
                      ,diagrams-svg
+            
     hs-source-dirs:   app
     default-language: Haskell2010
