@@ -157,18 +157,21 @@ toneGraph =
       edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, 0)) es
    in mkGraph nodes edges
 
-commonNeighbors :: Graph gr => gr (Int, Int) (Int, Int) -> Edge -> [Node]
+commonNeighbors :: Graph gr => gr NodeLabel EdgeLabel -> Edge -> [Int]
 commonNeighbors g (from, to) =
   let n1 = neighbors g from
       n2 = neighbors g to
    in DL.intersect n1 n2
 
+makeThreeTuples :: Edge -> [Int] -> [(Int, Int, Int)]
+makeThreeTuples (a, b) ns = map (\x -> (a, b, x)) ns
+
 -- given a graph, will return all the 3-cliques
--- threeClicks :: Graph gr => gr (Int, Int) (Int, Int) -> [(Int, Int, Int)]
--- threeClicks g =
---   let es = edges g
---       ns = map (\(x, y) -> (commonNeighbors g (x, y), (x, y))) es
---    in []
+threeClicks :: Graph gr => gr NodeLabel EdgeLabel -> [(Int, Int, Int)]
+threeClicks g =
+  let es = edges g
+      ns = map (\edge -> (edge, commonNeighbors g edge)) es
+   in concatMap (\(e, n) -> makeThreeTuples e n) ns
 
 -- 1. for each edge in the graph
 -- 2. for both vertices in the edge
