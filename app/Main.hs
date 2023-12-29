@@ -167,26 +167,27 @@ makeThreeTuples :: Edge -> [Int] -> [(Int, Int, Int)]
 makeThreeTuples (a, b) ns = map (\x -> (a, b, x)) ns
 
 -- given a graph, will return all the 3-cliques
-threeClicks :: NoteGraph -> [(Int, Int, Int)]
-threeClicks g =
-  let es = edges g
-      ns = map (\edge -> (edge, commonNeighbors g edge)) es
-   in concatMap (\(e, n) -> makeThreeTuples e n) ns
-
--- showTriad :: (Int, Int, Int) -> [String,String,String]
--- showTriad (a, b, c) = let a' = nodeLookup' Map.! a  --from index to coordinate
---                           b' = nodeLookup' Map.! b
---                           c' = nodeLookup' Map.! c
---                           n1 = nodeLookup' Map.! a' --from coordinate to index
---                           n2 = nodeLookup' Map.! b'
---                           n3 = nodeLookup' Map.! c'
-
 -- 1. for each edge in the graph
 -- 2. for both vertices in the edge
 -- 3. find the neighbor vertices in common
 -- 4 for each neighbor vertex in common, record a 3-tuple of the vertices in the edge + the common neighbor
 -- 5. sort each 3-tuple by value
 -- 6. dedupe the list
+threeClicks g =
+  let es = edges g
+      ns = map (\edge -> (edge, commonNeighbors g edge)) es
+      triads = concatMap (\(e, n) -> makeThreeTuples e n) ns
+   in map showTriad triads
+
+showTriad (a, b, c) =
+  let a' = nodeLookup' Map.! a -- from index to coordinate
+      b' = nodeLookup' Map.! b
+      c' = nodeLookup' Map.! c
+      n1 = getNote toneMatrix $ fst a' -- from coordinate to tone
+      n2 = getNote toneMatrix $ fst b'
+      n3 = getNote toneMatrix $ fst c'
+      tones = catMaybes [n1, n2, n3]
+   in map (\x -> noteMap Map.! (snd x)) tones
 
 myNeighbors :: NoteGraph -> NodeLabel -> [NodeLabel]
 myNeighbors tg i =
