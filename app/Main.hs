@@ -117,8 +117,7 @@ intervalEdges toneMat (x, y) =
         raiseMajorThird = getNote toneMat (majorThird (x, y))
         lowerMinorThird = getNote toneMat (minorThird (x, y))
         intervals = catMaybes [raiseFifth, raiseMajorThird, lowerMinorThird]
-        fakeNoteLabel = 0 -- TODO get real labels from the toneMatrix
-     in return $ map (\(loc', note) -> ((loc, fakeNoteLabel), (loc', fakeNoteLabel))) intervals
+     in return $ map (\(loc', note) -> ((loc, focus), (loc', note))) intervals
 
 allNotes :: [NodeLabel]
 allNotes =
