@@ -24,7 +24,7 @@ import Data.Word
 import Diagrams.Backend.SVG.CmdLine
 import Diagrams.Prelude
 
-type NodeLabel = (Int, Int)
+type NodeLabel = ((Int, Int), Int)
 
 type EdgeLabel = Int
 
@@ -104,12 +104,12 @@ toneMatrix =
       matdata = interleave es os
    in M.transpose $ M.fromLists matdata
 
-getNote :: M.Matrix Int -> (Int, Int) -> Maybe ((Int, Int), Int)
+getNote :: M.Matrix Int -> (Int, Int) -> Maybe NodeLabel
 getNote toneMat (x, y) =
   let f = M.safeGet x y toneMat
    in if f == Just 255 then Nothing else fmap (\i -> ((x, y), i)) f
 
-intervalEdges :: M.Matrix Int -> (Int, Int) -> Maybe [((Int, Int), (Int, Int))]
+intervalEdges :: M.Matrix Int -> (Int, Int) -> Maybe [(NodeLabel, NodeLabel)]
 intervalEdges toneMat (x, y) =
   do
     (loc, focus) <- getNote toneMat (x, y)
@@ -117,9 +117,10 @@ intervalEdges toneMat (x, y) =
         raiseMajorThird = getNote toneMat (majorThird (x, y))
         lowerMinorThird = getNote toneMat (minorThird (x, y))
         intervals = catMaybes [raiseFifth, raiseMajorThird, lowerMinorThird]
-     in return $ map (\(loc', note) -> (loc, loc')) intervals
+        fakeNoteLabel = 0 -- TODO get real labels from the toneMatrix
+     in return $ map (\(loc', note) -> ((loc, fakeNoteLabel), (loc', fakeNoteLabel))) intervals
 
-allNotes :: [((Int, Int), Int)]
+allNotes :: [NodeLabel]
 allNotes =
   let notefetcher = getNote toneMatrix
    in mapMaybe notefetcher intcords
@@ -140,21 +141,19 @@ justNotes :: (RealFrac a, Enum a) => [((a, a), Int)]
 justNotes =
   map (\(xy, n) -> (realTuple xy, n)) allNotes
 
-nodeLookup :: Map.Map (Int, Int) Int
+nodeLookup :: Map.Map NodeLabel Int
 nodeLookup =
-  let notes = map fst allNotes
-      notesWithIndex = zip notes [0 ..]
+  let notesWithIndex = zip allNotes [0 ..]
    in Map.fromList notesWithIndex
 
-nodeLookup' :: Map.Map Int (Int, Int)
+nodeLookup' :: Map.Map Int NodeLabel
 nodeLookup' =
-  let notes = map fst allNotes
-      notesWithIndex = zip [0 ..] notes
+  let notesWithIndex = zip [0 ..] allNotes
    in Map.fromList notesWithIndex
 
 toneGraph :: Graph gr => gr NodeLabel EdgeLabel
 toneGraph =
-  let nodes :: [(Int, (Int, Int))] = zip [0 ..] (map fst allNotes) -- the index is required for the graph
+  let nodes = zip [0 ..] allNotes -- the index is required for the graph
       es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) intcords
       edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, 0)) es
    in mkGraph nodes edges
@@ -174,6 +173,14 @@ threeClicks g =
   let es = edges g
       ns = map (\edge -> (edge, commonNeighbors g edge)) es
    in concatMap (\(e, n) -> makeThreeTuples e n) ns
+
+-- showTriad :: (Int, Int, Int) -> [String,String,String]
+-- showTriad (a, b, c) = let a' = nodeLookup' Map.! a  --from index to coordinate
+--                           b' = nodeLookup' Map.! b
+--                           c' = nodeLookup' Map.! c
+--                           n1 = nodeLookup' Map.! a' --from coordinate to index
+--                           n2 = nodeLookup' Map.! b'
+--                           n3 = nodeLookup' Map.! c'
 
 -- 1. for each edge in the graph
 -- 2. for both vertices in the edge
