@@ -7,13 +7,12 @@
 module Main where
 
 import Data.Data (Typeable)
-import Data.Function (on)
+-- import Data.Function (on)
 import Data.Graph.Inductive (Graph (mkGraph))
-import Data.GraphViz (fontColor)
+import Data.Graph.Inductive.PatriciaTree (Gr)
 import Data.Hashable
 import Data.Int (Int)
 import qualified Data.List as DL
-import qualified Data.Map as M
 import qualified Data.Map as Map
 import qualified Data.Matrix as M
 import Data.Maybe
@@ -117,11 +116,6 @@ allNotes =
   let notefetcher = getNote toneMatrix
    in mapMaybe notefetcher intcords
 
--- allEdges :: [(Int, Int, L.Text)]
--- allEdges =
---   let es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) coordinates
---    in map (\(a, b) -> (mkIndex a, mkIndex b, "255")) es
-
 coordinates :: (Fractional a, Enum a) => [(a, a)]
 coordinates = concat [[(i, j) | j <- [1.0 .. 25.0]] | i <- [1.0 .. 25.0]]
 
@@ -138,12 +132,13 @@ justNotes :: (RealFrac a, Enum a) => [((a, a), Int)]
 justNotes =
   map (\(xy, n) -> (realTuple xy, n)) allNotes
 
-nodeLookup :: M.Map (Int, Int) Int
+nodeLookup :: Map.Map (Int, Int) Int
 nodeLookup =
   let notes = map fst allNotes
       notesWithIndex = zip notes [0 ..]
    in Map.fromList notesWithIndex
 
+toneGraph :: Graph gr => gr (Int, Int) (Int, Int)
 toneGraph =
   let nodes :: [(Int, (Int, Int))] = zip [0 ..] (map fst allNotes) -- the index is required for the graph
       es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) intcords
