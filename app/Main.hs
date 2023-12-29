@@ -138,17 +138,18 @@ realTuple (x, y) = (fromIntegral x, fromIntegral y)
 intcords :: [(Int, Int)]
 intcords = map floorTuple coordinates
 
-justNotes :: (RealFrac a, Enum a) => [(a, a)]
+justNotes :: (RealFrac a, Enum a) => [((a, a), Int)]
 justNotes =
-  let ns = map fst allNotes
-   in map realTuple ns
+  map (\((x, y), n) -> (realTuple (x, y), n)) allNotes
 
-points = map p2 justNotes
+points =
+  let pts = map fst justNotes
+   in map p2 pts
 
-circleAtPoint :: (Double, Double) -> Diagram B
-circleAtPoint (x, y) =
+circleAtPoint :: ((Double, Double), Int) -> Diagram B
+circleAtPoint ((x, y), n) =
   ( circle 1
-      <> (center $ text "Hi")
+      <> (center $ text $ show n)
   )
     # translate (r2 (x, y))
 
