@@ -8,8 +8,8 @@ module Main where
 
 import Data.Data (Typeable)
 -- import Data.Function (on)
-import Data.Graph.Inductive (Graph (mkGraph))
-import Data.Graph.Inductive.PatriciaTree (Gr)
+import Data.Graph.Inductive (Graph (mkGraph), neighbors)
+-- import Data.Graph.Inductive.PatriciaTree (Gr)
 import Data.Hashable
 import Data.Int (Int)
 import qualified Data.List as DL
@@ -138,12 +138,24 @@ nodeLookup =
       notesWithIndex = zip notes [0 ..]
    in Map.fromList notesWithIndex
 
+nodeLookup' :: Map.Map Int (Int, Int)
+nodeLookup' =
+  let notes = map fst allNotes
+      notesWithIndex = zip [0 ..] notes
+   in Map.fromList notesWithIndex
+
 toneGraph :: Graph gr => gr (Int, Int) (Int, Int)
 toneGraph =
   let nodes :: [(Int, (Int, Int))] = zip [0 ..] (map fst allNotes) -- the index is required for the graph
       es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) intcords
       edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, b)) es
    in mkGraph nodes edges
+
+myNeighbors :: Graph gr => gr (Int, Int) (Int, Int) -> (Int, Int) -> [(Int, Int)]
+myNeighbors tg i =
+  let i' = nodeLookup Map.! i
+      ns = neighbors tg i'
+   in map (\x -> nodeLookup' Map.! x) ns
 
 points =
   let pts = map fst justNotes
