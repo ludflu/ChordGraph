@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
@@ -12,6 +13,7 @@ import Data.GraphViz (fontColor)
 import Data.Hashable
 import Data.Int (Int)
 import qualified Data.List as DL
+import qualified Data.Map as M
 import qualified Data.Map as Map
 import qualified Data.Matrix as M
 import Data.Maybe
@@ -52,7 +54,7 @@ netlines =
 
 noteMap :: Map.Map Int String
 noteMap =
-  let notes = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]
+  let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
    in Map.fromList $ zip [0 .. 11] notes
 
 evens :: [a] -> [a]
@@ -93,7 +95,7 @@ toneMatrix =
   let es = map alternatePad $ evens netlines
       os = map (surroundPad . alternatePad) $ odds netlines
       matdata = interleave es os
-   in M.fromLists matdata
+   in M.transpose $ M.fromLists matdata
 
 getNote :: M.Matrix Int -> (Int, Int) -> Maybe ((Int, Int), Int)
 getNote toneMat (x, y) =
@@ -112,14 +114,8 @@ intervalEdges toneMat (x, y) =
 
 allNotes :: [((Int, Int), Int)]
 allNotes =
-  let notefetcher = getNote $ M.transpose toneMatrix
+  let notefetcher = getNote toneMatrix
    in mapMaybe notefetcher intcords
-
--- allNotes :: [(Int, L.Text)]
--- allNotes =
---   let notefetcher = getNote toneMatrix
---       ns = mapMaybe (notefetcher) coordinates
---    in map (\(a, b) -> (mkIndex a, L.pack $ show b)) ns
 
 -- allEdges :: [(Int, Int, L.Text)]
 -- allEdges =
@@ -142,13 +138,25 @@ justNotes :: (RealFrac a, Enum a) => [((a, a), Int)]
 justNotes =
   map (\(xy, n) -> (realTuple xy, n)) allNotes
 
+nodeLookup :: M.Map (Int, Int) Int
+nodeLookup =
+  let notes = map fst allNotes
+      notesWithIndex = zip notes [0 ..]
+   in Map.fromList notesWithIndex
+
+toneGraph =
+  let nodes :: [(Int, (Int, Int))] = zip [0 ..] (map fst allNotes) -- the index is required for the graph
+      es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) intcords
+      edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, b)) es
+   in mkGraph nodes edges
+
 points =
   let pts = map fst justNotes
    in map p2 pts
 
 circleAtPoint :: ((Double, Double), Int) -> Diagram B
 circleAtPoint ((x, y), n) =
-  let noteName = noteMap Map.! n
+  let noteName = noteMap Map.! n -- unsafe!
    in ( circle 0.75
           <> (center $ text $ noteName)
       )
