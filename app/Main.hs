@@ -24,6 +24,10 @@ import Data.Word
 import Diagrams.Backend.SVG.CmdLine
 import Diagrams.Prelude
 
+type NodeLabel = (Int, Int)
+
+type EdgeLabel = Int
+
 netlines :: [[Int]]
 netlines =
   [ [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0],
@@ -146,11 +150,11 @@ nodeLookup' =
       notesWithIndex = zip [0 ..] notes
    in Map.fromList notesWithIndex
 
-toneGraph :: Graph gr => gr (Int, Int) (Int, Int)
+toneGraph :: Graph gr => gr NodeLabel EdgeLabel
 toneGraph =
   let nodes :: [(Int, (Int, Int))] = zip [0 ..] (map fst allNotes) -- the index is required for the graph
       es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) intcords
-      edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, b)) es
+      edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, 0)) es
    in mkGraph nodes edges
 
 commonNeighbors :: Graph gr => gr (Int, Int) (Int, Int) -> Edge -> [Node]
@@ -173,7 +177,7 @@ commonNeighbors g (from, to) =
 -- 5. sort each 3-tuple by value
 -- 6. dedupe the list
 
-myNeighbors :: Graph gr => gr (Int, Int) (Int, Int) -> (Int, Int) -> [(Int, Int)]
+myNeighbors :: Graph gr => gr NodeLabel EdgeLabel -> NodeLabel -> [NodeLabel]
 myNeighbors tg i =
   let i' = nodeLookup Map.! i
       ns = neighbors tg i'
