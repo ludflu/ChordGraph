@@ -54,28 +54,39 @@ makeThreeTuples (from, to) ns = map (\x -> (from, to, x)) ns
 -- 2. for both vertices in the edge
 -- 3. find the neighbor vertices in common
 -- 4 for each neighbor vertex in common, record a 3-tuple of the vertices in the edge + the common neighbor
--- 5. sort each 3-tuple by value TODO
--- 6. dedupe the list TODO
+-- 5. sort each 3-tuple by value
+-- 6. dedupe the list
 -- threeClicks :: NoteGraph -> [[String]]
 threeClicks g =
   let es = edges g
       ns = map (\edge -> (edge, commonNeighbors g edge)) es
-      triads = concatMap (\(e, n) -> makeThreeTuples e n) ns
       untuple (a, b, c) = [a, b, c]
-      sorted = DL.sort . untuple
-   in sortUniq $ map sorted triads
+      triads :: [(Int, Int, Int)] = concatMap (\(e, n) -> makeThreeTuples e n) ns
+      triadLists = map untuple triads
+      makeTones = map noteFromIndex
+      orderedTriads :: [[Int]] = map (DL.sort . makeTones) triadLists
+   in map showTriad $ sortUniq orderedTriads
 
--- in map showTriad triads
+noteFromIndex :: Int -> Int
+noteFromIndex idx =
+  let (cord, tone) = nodeLookup' Map.! idx
+   in tone
 
-showTriad (a, b, c) =
-  let a' = nodeLookup' Map.! a -- from index to coordinate
-      b' = nodeLookup' Map.! b
-      c' = nodeLookup' Map.! c
-      n1 = getNote toneMatrix $ fst a' -- from coordinate to tone
-      n2 = getNote toneMatrix $ fst b'
-      n3 = getNote toneMatrix $ fst c'
-      tones = catMaybes [n1, n2, n3]
-   in map (\x -> noteMap Map.! (snd x)) tones
+noteFromTone :: Int -> String
+noteFromTone idx = noteMap Map.! idx
+
+showTriad :: [Int] -> [String]
+showTriad ns = map noteFromTone ns
+
+-- showTriad (a, b, c) =
+--   let a' = nodeLookup' Map.! a -- from index to coordinate
+--       b' = nodeLookup' Map.! b
+--       c' = nodeLookup' Map.! c
+--       n1 = getNote toneMatrix $ fst a' -- from coordinate to tone
+--       n2 = getNote toneMatrix $ fst b'
+--       n3 = getNote toneMatrix $ fst c'
+--       tones = catMaybes [n1, n2, n3]
+--    in map (\x -> noteMap Map.! (snd x)) tones
 
 myNeighbors :: NoteGraph -> NodeLabel -> [NodeLabel]
 myNeighbors tg i =
