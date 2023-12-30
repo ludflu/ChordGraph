@@ -11,6 +11,7 @@ import Data.Graph.Inductive (Edge, Gr, Graph (mkGraph), Node, edges, neighbors)
 import Data.Hashable
 import Data.Int (Int)
 import qualified Data.List as DL
+import Data.List.Unique
 import qualified Data.Map as Map
 import qualified Data.Matrix as M
 import Data.Maybe
@@ -55,12 +56,16 @@ makeThreeTuples (from, to) ns = map (\x -> (from, to, x)) ns
 -- 4 for each neighbor vertex in common, record a 3-tuple of the vertices in the edge + the common neighbor
 -- 5. sort each 3-tuple by value TODO
 -- 6. dedupe the list TODO
-threeClicks :: NoteGraph -> [[String]]
+-- threeClicks :: NoteGraph -> [[String]]
 threeClicks g =
   let es = edges g
       ns = map (\edge -> (edge, commonNeighbors g edge)) es
       triads = concatMap (\(e, n) -> makeThreeTuples e n) ns
-   in map showTriad triads
+      untuple (a, b, c) = [a, b, c]
+      sorted = DL.sort . untuple
+   in sortUniq $ map sorted triads
+
+-- in map showTriad triads
 
 showTriad (a, b, c) =
   let a' = nodeLookup' Map.! a -- from index to coordinate
