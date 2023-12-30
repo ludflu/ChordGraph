@@ -46,15 +46,16 @@ commonNeighbors g (from, to) =
    in DL.intersect n1 n2
 
 makeThreeTuples :: Edge -> [Int] -> [(Int, Int, Int)]
-makeThreeTuples (a, b) ns = map (\x -> (a, b, x)) ns
+makeThreeTuples (from, to) ns = map (\x -> (from, to, x)) ns
 
 -- given a graph, will return all the 3-cliques
 -- 1. for each edge in the graph
 -- 2. for both vertices in the edge
 -- 3. find the neighbor vertices in common
 -- 4 for each neighbor vertex in common, record a 3-tuple of the vertices in the edge + the common neighbor
--- 5. sort each 3-tuple by value
--- 6. dedupe the list
+-- 5. sort each 3-tuple by value TODO
+-- 6. dedupe the list TODO
+threeClicks :: NoteGraph -> [[String]]
 threeClicks g =
   let es = edges g
       ns = map (\edge -> (edge, commonNeighbors g edge)) es
