@@ -17,7 +17,7 @@ import Data.Maybe
 import qualified Data.Text.Lazy as L
 import Data.Tuple
 import Diagrams.Backend.SVG.CmdLine (B, mainWith)
-import Diagrams.Prelude (Diagram, center, circle, p2, position, r2, text, translate, (#))
+import Diagrams.Prelude (Diagram, P2, center, circle, p2, position, r2, text, translate, (#))
 import Tonnetz
 
 type NodeLabel = ((Int, Int), Int)
@@ -138,10 +138,6 @@ justNotes :: (RealFrac a, Enum a) => [NodeLabel] -> [((a, a), Int)]
 justNotes notes =
   map (\(xy, n) -> (realTuple xy, n)) notes
 
-points =
-  let pts = map fst (justNotes allNotes)
-   in map p2 pts
-
 circleAtPoint :: ((Double, Double), Int) -> Diagram B
 circleAtPoint ((x, y), n) =
   let noteName = noteMap Map.! n -- unsafe!
@@ -150,9 +146,11 @@ circleAtPoint ((x, y), n) =
       )
         # translate (r2 (x, y))
 
-cs = map circleAtPoint (justNotes allNotes)
-
-field = position $ zip points cs
-
 main :: IO ()
 main = mainWith field
+  where
+    notes = justNotes allNotes
+    cs = map circleAtPoint notes
+    cords = map fst notes
+    points = map p2 cords
+    field = position $ zip points cs
