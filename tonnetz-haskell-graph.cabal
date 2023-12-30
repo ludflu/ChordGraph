@@ -29,7 +29,8 @@ executable tonnetz-haskell-graph
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
---    other-modules:    WriteRunDot
+    other-modules:    Tonnetz
+                     --
     build-depends:    base ^>=4.16.4.0
                      ,containers
                      ,hashable

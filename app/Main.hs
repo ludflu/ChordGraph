@@ -7,10 +7,6 @@
 module Main where
 
 import Data.Data (Typeable)
--- import Data.Function (on)
-
--- import Data.Graph.Inductive.PatriciaTree (Gr)
-
 import Data.Graph.Inductive (Edge, Gr, Graph (mkGraph), Node, edges, neighbors)
 import Data.Hashable
 import Data.Int (Int)
@@ -20,61 +16,15 @@ import qualified Data.Matrix as M
 import Data.Maybe
 import qualified Data.Text.Lazy as L
 import Data.Tuple
-import Data.Word
-import Diagrams.Backend.SVG.CmdLine
-import Diagrams.Prelude
+import Diagrams.Backend.SVG.CmdLine (B, mainWith)
+import Diagrams.Prelude (Diagram, center, circle, p2, position, r2, text, translate, (#))
+import Tonnetz
 
 type NodeLabel = ((Int, Int), Int)
 
 type EdgeLabel = Int
 
 type NoteGraph = Gr NodeLabel EdgeLabel
-
-netlines :: [[Int]]
-netlines =
-  [ [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0],
-    [3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8],
-    [11, 6, 1, 8, 3, 10, 5, 0, 7, 2, 9, 4, 11],
-    [2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0, 7],
-    [10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10],
-    [1, 8, 3, 10, 5, 0, 7, 2, 9, 4, 11, 6],
-    [9, 4, 11, 6, 1, 8, 3, 10, 5, 0, 7, 2, 9],
-    [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5],
-    [8, 3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8],
-    [11, 6, 1, 8, 3, 10, 5, 0, 7, 2, 9, 4],
-    [7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0, 7],
-    [10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8, 3],
-    [6, 1, 8, 3, 10, 5, 0, 7, 2, 9, 4, 11, 6],
-    [9, 4, 11, 6, 1, 8, 3, 10, 5, 0, 7, 2],
-    [5, 0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5],
-    [8, 3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1],
-    [4, 11, 6, 1, 8, 3, 10, 5, 0, 7, 2, 9, 4],
-    [7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0],
-    [3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8, 3],
-    [6, 1, 8, 3, 10, 5, 0, 7, 2, 9, 4, 11],
-    [2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0, 7, 2],
-    [5, 0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10],
-    [1, 8, 3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1],
-    [4, 11, 6, 1, 8, 3, 10, 5, 0, 7, 2, 9],
-    [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0]
-  ]
-
-noteMap :: Map.Map Int String
-noteMap =
-  let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-   in Map.fromList $ zip [0 .. 11] notes
-
-evens :: [a] -> [a]
-evens xs = [x | (x, index) <- zip xs [0 ..], even index]
-
-odds :: [a] -> [a]
-odds xs = [x | (x, index) <- zip xs [0 ..], odd index]
-
-alternatePad = DL.intersperse 255
-
-surroundPad xs = 255 : xs ++ [255]
-
-interleave xs ys = concat (DL.transpose [xs, ys])
 
 fifth :: (Int, Int) -> (Int, Int)
 fifth (x, y) = (x + 2, y)
@@ -96,13 +46,6 @@ minorThird' (x, y) = (x + 1, y - 1)
 
 mkIndex :: (Int, Int) -> Int
 mkIndex (x, y) = y * 25 + x
-
-toneMatrix :: M.Matrix Int
-toneMatrix =
-  let es = map alternatePad $ evens netlines
-      os = map (surroundPad . alternatePad) $ odds netlines
-      matdata = interleave es os
-   in M.transpose $ M.fromLists matdata
 
 getNote :: M.Matrix Int -> (Int, Int) -> Maybe NodeLabel
 getNote toneMat (x, y) =
@@ -135,10 +78,6 @@ realTuple (x, y) = (fromIntegral x, fromIntegral y)
 
 intcords :: [(Int, Int)]
 intcords = map floorTuple coordinates
-
-justNotes :: (RealFrac a, Enum a) => [((a, a), Int)]
-justNotes =
-  map (\(xy, n) -> (realTuple xy, n)) allNotes
 
 nodeLookup :: Map.Map NodeLabel Int
 nodeLookup =
@@ -195,8 +134,12 @@ myNeighbors tg i =
       ns = neighbors tg i'
    in map (\x -> nodeLookup' Map.! x) ns
 
+justNotes :: (RealFrac a, Enum a) => [NodeLabel] -> [((a, a), Int)]
+justNotes notes =
+  map (\(xy, n) -> (realTuple xy, n)) notes
+
 points =
-  let pts = map fst justNotes
+  let pts = map fst (justNotes allNotes)
    in map p2 pts
 
 circleAtPoint :: ((Double, Double), Int) -> Diagram B
@@ -207,7 +150,7 @@ circleAtPoint ((x, y), n) =
       )
         # translate (r2 (x, y))
 
-cs = map circleAtPoint justNotes
+cs = map circleAtPoint (justNotes allNotes)
 
 field = position $ zip points cs
 
