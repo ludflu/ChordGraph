@@ -6,29 +6,29 @@ import qualified Data.Map as Map
 
 type TriadNodeLabel = [String] -- the node is the set of notes in the triad
 
-type TriadEdgeLabel = Int -- the edge is the differeint in magnitude of the tone being swapped
+type TriadEdgeLabel = Int -- the edge is the difference in magnitude of the tone being swapped
 -- out compared to the tone being swapped in
 
 notetriads :: [[String]]
 notetriads =
-  [ ["C", "D#", "G"], --
-    ["C", "D#", "G#"], --
-    ["C", "E", "G"], --
-    ["C", "E", "A"], --
-    ["C", "F", "G#"], --
-    ["C", "F", "A"], --
-    ["C#", "E", "G#"], --
-    ["C#", "E", "A"], --
-    ["C#", "F", "G#"], --
-    ["C#", "F", "A#"], --
-    ["C#", "F#", "A"], --
-    ["C#", "F#", "A#"], --
-    ["D", "F", "A"], --
+  [ ["C", "D#", "G"],
+    ["C", "D#", "G#"],
+    ["C", "E", "G"],
+    ["C", "E", "A"],
+    ["C", "F", "G#"],
+    ["C", "F", "A"],
+    ["C#", "E", "G#"],
+    ["C#", "E", "A"],
+    ["C#", "F", "G#"],
+    ["C#", "F", "A#"],
+    ["C#", "F#", "A"],
+    ["C#", "F#", "A#"],
+    ["D", "F", "A"],
     ["D", "F", "A#"],
-    ["D", "F#", "A"], --
-    ["D", "F#", "B"], --
+    ["D", "F#", "A"],
+    ["D", "F#", "B"],
     ["D", "G", "A#"],
-    ["D", "G", "B"], --
+    ["D", "G", "B"],
     ["D#", "F#", "A#"],
     ["D#", "F#", "B"],
     ["D#", "G", "A#"],
@@ -41,9 +41,6 @@ hasEdge :: TriadNodeLabel -> TriadNodeLabel -> Bool
 hasEdge triad1 triad2 =
   let sharedNotes = DL.intersect triad1 triad2
    in length sharedNotes == 2
-
---  findTriadEdges
--- for each triad
 
 findMates :: [TriadNodeLabel] -> TriadNodeLabel -> [TriadNodeLabel]
 findMates triads triad = DL.filter (hasEdge triad) triads
