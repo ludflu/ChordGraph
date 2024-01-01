@@ -9,6 +9,7 @@ type TriadNodeLabel = [String] -- the node is the set of notes in the triad
 type TriadEdgeLabel = Int -- the edge is the difference in magnitude of the tone being swapped
 -- out compared to the tone being swapped in
 
+-- question: give a triad, is there a formula that will tell you if a give chord is minor or major?
 notetriads :: [[String]]
 notetriads =
   [ ["C", "D#", "G"],

@@ -108,3 +108,19 @@ realTuple (x, y) = (fromIntegral x, fromIntegral y)
 
 intcords :: [(Int, Int)]
 intcords = map floorTuple coordinates
+
+isMinor :: Int -> Int -> Int -> Bool
+isMinor a b c =
+  let firstInterval = abs (a - b)
+      secondInterval = abs (b - c)
+      thirdInterval = abs (a - c)
+      sortedIntervals = DL.sort [firstInterval, secondInterval, thirdInterval]
+   in sortedIntervals == [3, 5, 8]
+
+isMajor :: Int -> Int -> Int -> Bool
+isMajor a b c =
+  let firstInterval = abs (a - b)
+      secondInterval = abs (b - c)
+      thirdInterval = abs (a - c)
+      sortedIntervals = DL.sort [firstInterval, secondInterval, thirdInterval]
+   in sortedIntervals == [4, 5, 9]
