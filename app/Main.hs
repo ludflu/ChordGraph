@@ -114,24 +114,16 @@ sortThree a b c =
 isMajor' :: Tone -> Tone -> Tone -> Bool
 isMajor' x y z =
   let (a, b, c) = sortThree x y z
-      i1 = abs $ c - b
+      i1 = abs $ b - a
       i2 = abs $ c - a
-      i3 = abs $ b - a
-      intervals = [i1, i2, i3]
-      hasMajorThird = DL.elem 4 intervals
-      hasPerfectFifth = (DL.elem 7 intervals) || (DL.elem 5 intervals)
-   in hasMajorThird && hasPerfectFifth
+   in (i1, i2) == (4, 7)
 
 isMinor' :: Tone -> Tone -> Tone -> Bool
 isMinor' x y z =
   let (a, b, c) = sortThree x y z
-      i1 = abs $ c - b
+      i1 = abs $ b - a
       i2 = abs $ c - a
-      i3 = abs $ b - a
-      intervals = [i1, i2, i3]
-      hasMinorThird = DL.elem 3 intervals
-      hasPerfectFifth = (DL.elem 7 intervals) || (DL.elem 5 intervals)
-   in hasMinorThird && hasPerfectFifth
+   in (i1, i2) == (3, 7)
 
 isMajor :: String -> String -> String -> Bool
 isMajor a b c =
