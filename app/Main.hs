@@ -22,30 +22,33 @@ type TriadEdgeLabel = Int -- the edge is the difference in magnitude of the tone
 -- question: give a triad, is there a formula that will tell you if a give chord is minor or major?
 notetriads :: [[String]]
 notetriads =
-  [ ["C", "D#", "G"],
-    ["C", "D#", "G#"],
-    ["C", "E", "G"],
-    ["C", "E", "A"],
-    ["C", "F", "G#"],
-    ["C", "F", "A"],
-    ["C#", "E", "G#"],
-    ["C#", "E", "A"],
-    ["C#", "F", "G#"],
-    ["C#", "F", "A#"],
-    ["C#", "F#", "A"],
-    ["C#", "F#", "A#"],
-    ["D", "F", "A"],
-    ["D", "F", "A#"],
-    ["D", "F#", "A"],
-    ["D", "F#", "B"],
-    ["D", "G", "A#"],
-    ["D", "G", "B"],
-    ["D#", "F#", "A#"],
-    ["D#", "F#", "B"],
-    ["D#", "G", "A#"],
-    ["D#", "G#", "B"],
-    ["E", "G", "B"],
-    ["E", "G#", "B"]
+  [ ["C", "E", "G"], -- CMAJOR
+    ["C#", "E", "G#"], -- C# MAJOR
+    ["D", "F#", "A"], -- D MAJOR
+    ["D#", "G", "A#"], -- Eb Major
+    ["E", "G#", "B"], -- E Major
+    ["F", "A", "C"], -- F Major
+    ["F#", "A#", "C#"], -- F# Major
+    ["G", "D", "B"], -- G Major
+    ["G#", "C", "D#"], -- Ab Major
+    ["A", "C#", "E"], -- A Major
+    ["A#", "D", "F"], -- Bb Major
+    ["B", "D#", "G#"], -- B Major
+    ["C", "D#", "G"], -- C Minor
+    ["C#", "E", "G#"], -- C # Minor
+    ["D", "F", "A"], -- D Minor
+    ["D#", "F#", "A#"], -- Eb Minor
+    ["E", "G", "B"], -- E Minor
+    ["F", "G#", "C"], -- F Minor
+    ["F#", "A", "C#"], -- F# Minor
+    ["G", "A#", "D"], -- G Minor
+    ["G#", "B", "D#"], -- Ab Minor
+    ["A", "C", "E"], -- A Minor
+    ["A#", "C#", "F"], -- Bb Minor
+    ["B", "D", "F#"] -- B Minor
+
+    --  ["G#","C#", "F"],  --note sure about this one
+    --  ["D#", "F#", "B"], --note sure about this one
   ]
 
 type Tone = ℤ / 12
