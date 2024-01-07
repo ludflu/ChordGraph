@@ -150,8 +150,8 @@ findChanged t1 t2 =
 makeTxform :: Tone -> Bool -> TriadicTransform
 makeTxform delta rootDiffers
   | delta == 2 || delta == 10 = Relative
-  | delta == 1 || delta == 11 && rootDiffers = Leading
-  | delta == 1 || delta == 11 && not rootDiffers = Parallel
+  | (delta == 1 || delta == 11) && rootDiffers = Leading
+  | (delta == 1 || delta == 11) && not rootDiffers = Parallel
 
 describeTransform :: Triad -> Triad -> TriadicTransform
 describeTransform t1 t2 =
