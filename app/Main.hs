@@ -8,6 +8,7 @@ module Main where
 
 import qualified Data.Graph.Inductive as G
 import qualified Data.List as DL
+import Data.List.Unique (sortUniq)
 import qualified Data.Map as Map
 import Data.Modular (ℤ, type (/))
 
@@ -18,6 +19,8 @@ type TriadNodeLabel = [String] -- the node is the set of notes in the triad
 
 type TriadEdgeLabel = Int -- the edge is the difference in magnitude of the tone being swapped
 -- out compared to the tone being swapped in
+
+type TriadGraph = G.Gr TriadNodeLabel TriadEdgeLabel
 
 -- question: give a triad, is there a formula that will tell you if a give chord is minor or major?
 notetriads :: [[String]]
@@ -105,11 +108,20 @@ triadEdges =
       pairs = concatMap (\(triad, mates) -> makePairs triad mates) es
    in pairs
 
-triadGraph :: G.Graph gr => gr TriadNodeLabel TriadEdgeLabel
+triadGraph :: TriadGraph
 triadGraph = G.mkGraph nodes edges
   where
     nodes = zip [0 ..] notetriads
     edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, 0)) triadEdges
+
+triadFinder :: Int -> TriadNodeLabel
+triadFinder idx = nodeLookup' Map.! idx
+
+findNeighbors :: [String] -> [TriadNodeLabel]
+findNeighbors triad =
+  let tidx = nodeLookup Map.! triad
+      ns = sortUniq $ G.neighbors triadGraph tidx
+   in map triadFinder ns
 
 noteC :: Tone
 noteC = 0
