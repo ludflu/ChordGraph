@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
 -- module TriadGraph where
@@ -45,6 +46,8 @@ notetriads =
   ]
 
 type Tone = ℤ / 12
+
+type Triad = (Tone, Tone, Tone)
 
 noteMap :: Map.Map Tone String
 noteMap =
@@ -110,6 +113,20 @@ sortThree a b c =
       y = head $ drop 1 sorted
       z = last sorted
    in (x, y, z)
+
+untuple :: Triad -> [Tone]
+untuple (a, b, c) = [a, b, c]
+
+findChanged :: Triad -> Triad -> Tone
+findChanged t1 t2 =
+  let as :: [Tone] = untuple t1
+      bs :: [Tone] = untuple t2
+      common :: [Tone] = DL.intersect as bs
+      tnote1 = filter (\n -> n `DL.notElem` common) as
+      tnote2 = filter (\n -> n `DL.notElem` common) bs
+      n1 = head tnote1
+      n2 = head tnote2
+   in toneInterval n1 n2
 
 isMajor' :: Tone -> Tone -> Tone -> Bool
 isMajor' x y z =
