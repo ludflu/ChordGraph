@@ -55,6 +55,16 @@ type Tone = ℤ / 12
 
 type Triad = (Tone, Tone, Tone)
 
+nodeLookup :: Map.Map TriadNodeLabel Int
+nodeLookup =
+  let triadsWithIndex = zip notetriads [0 ..]
+   in Map.fromList triadsWithIndex
+
+nodeLookup' :: Map.Map Int TriadNodeLabel
+nodeLookup' =
+  let triadsWithIndex = zip [0 ..] notetriads
+   in Map.fromList triadsWithIndex
+
 noteMap :: Map.Map Tone String
 noteMap =
   let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -81,11 +91,6 @@ hasEdge triad1 triad2 =
 findMates :: [TriadNodeLabel] -> TriadNodeLabel -> [TriadNodeLabel]
 findMates triads triad = DL.filter (hasEdge triad) triads
 
-nodeLookup :: Map.Map TriadNodeLabel Int
-nodeLookup =
-  let nodesWithIndex = zip notetriads [0 ..]
-   in Map.fromList nodesWithIndex
-
 neighborChords :: [[TriadNodeLabel]]
 neighborChords =
   let cfinder = findMates notetriads
@@ -100,11 +105,11 @@ triadEdges =
       pairs = concatMap (\(triad, mates) -> makePairs triad mates) es
    in pairs
 
--- triadGraph :: Graph gr => gr TriadNodeLabel TriadEdgeLabel
--- triadGraph = mkGraph nodes es
---   where
---     nodes = zip [0 ..] notetriads
---     es = triadEdges
+triadGraph :: G.Graph gr => gr TriadNodeLabel TriadEdgeLabel
+triadGraph = G.mkGraph nodes edges
+  where
+    nodes = zip [0 ..] notetriads
+    edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, 0)) triadEdges
 
 noteC :: Tone
 noteC = 0
