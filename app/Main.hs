@@ -9,8 +9,11 @@ module Main where
 import qualified Data.Graph.Inductive as G
 import qualified Data.List as DL
 import qualified Data.Map as Map
-import Data.Modular
+import Data.Modular (ℤ, type (/))
 
+data TriadicTransform = Leading | Relative | Parallel deriving (Show)
+
+-- | Slide | Nebenverwandt | Hexpole
 type TriadNodeLabel = [String] -- the node is the set of notes in the triad
 
 type TriadEdgeLabel = Int -- the edge is the difference in magnitude of the tone being swapped
@@ -59,6 +62,14 @@ noteMap' =
   let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
    in Map.fromList $ zip notes [0 .. 11]
 
+mapTriad :: Triad -> [String]
+mapTriad (a, b, c) = [noteMap Map.! a, noteMap Map.! b, noteMap Map.! c]
+
+mapTriad' :: [String] -> Triad
+mapTriad' notes =
+  let (a, b, c) = (notes !! 0, notes !! 1, notes !! 2)
+   in (noteMap' Map.! a, noteMap' Map.! b, noteMap' Map.! c)
+
 hasEdge :: TriadNodeLabel -> TriadNodeLabel -> Bool
 hasEdge triad1 triad2 =
   let sharedNotes = DL.intersect triad1 triad2
@@ -72,6 +83,7 @@ nodeLookup =
   let nodesWithIndex = zip notetriads [0 ..]
    in Map.fromList nodesWithIndex
 
+neighborChords :: [[TriadNodeLabel]]
 neighborChords =
   let cfinder = findMates notetriads
    in map cfinder notetriads
@@ -117,6 +129,13 @@ sortThree a b c =
 untuple :: Triad -> [Tone]
 untuple (a, b, c) = [a, b, c]
 
+findChanged' :: [String] -> [String] -> TriadicTransform
+findChanged' t1 t2 =
+  let t1' = mapTriad' t1
+      t2' = mapTriad' t2
+      changeInterval = findChanged t1' t2'
+   in describeTransform t1' t2'
+
 findChanged :: Triad -> Triad -> Tone
 findChanged t1 t2 =
   let as :: [Tone] = untuple t1
@@ -126,7 +145,21 @@ findChanged t1 t2 =
       tnote2 = filter (\n -> n `DL.notElem` common) bs
       n1 = head tnote1
       n2 = head tnote2
-   in toneInterval n1 n2
+   in toneInterval n2 n1
+
+makeTxform :: Tone -> Bool -> TriadicTransform
+makeTxform delta rootDiffers
+  | delta == 2 || delta == 10 = Relative
+  | delta == 1 || delta == 11 && rootDiffers = Leading
+  | delta == 1 || delta == 11 && not rootDiffers = Parallel
+
+describeTransform :: Triad -> Triad -> TriadicTransform
+describeTransform t1 t2 =
+  let delta = findChanged t1 t2
+      (r1, _, _) = t1
+      (r2, _, _) = t2
+      rootDiffers = r1 /= r2
+   in makeTxform delta rootDiffers
 
 isMajor' :: Tone -> Tone -> Tone -> Bool
 isMajor' x y z =
