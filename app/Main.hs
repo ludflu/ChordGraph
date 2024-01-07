@@ -1,116 +1,151 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
+
+-- module TriadGraph where
 
 module Main where
 
-import Data.Data (Typeable)
-import Data.Graph.Inductive (Edge, Gr, Graph (mkGraph), Node, edges, neighbors)
-import Data.Hashable
-import Data.Int (Int)
+import qualified Data.Graph.Inductive as G
 import qualified Data.List as DL
-import Data.List.Unique
 import qualified Data.Map as Map
-import qualified Data.Matrix as M
-import Data.Maybe
-import qualified Data.Text.Lazy as L
-import Data.Tuple
-import Diagrams.Backend.SVG.CmdLine (B, mainWith)
-import Diagrams.Prelude (Diagram, P2, center, circle, p2, position, r2, text, translate, (#))
-import Tonnetz
+import Data.Modular
 
-type NoteGraph = Gr NodeLabel EdgeLabel
+type TriadNodeLabel = [String] -- the node is the set of notes in the triad
 
-nodeLookup :: Map.Map NodeLabel Int
+type TriadEdgeLabel = Int -- the edge is the difference in magnitude of the tone being swapped
+-- out compared to the tone being swapped in
+
+-- question: give a triad, is there a formula that will tell you if a give chord is minor or major?
+notetriads :: [[String]]
+notetriads =
+  [ ["C", "D#", "G"],
+    ["C", "D#", "G#"],
+    ["C", "E", "G"],
+    ["C", "E", "A"],
+    ["C", "F", "G#"],
+    ["C", "F", "A"],
+    ["C#", "E", "G#"],
+    ["C#", "E", "A"],
+    ["C#", "F", "G#"],
+    ["C#", "F", "A#"],
+    ["C#", "F#", "A"],
+    ["C#", "F#", "A#"],
+    ["D", "F", "A"],
+    ["D", "F", "A#"],
+    ["D", "F#", "A"],
+    ["D", "F#", "B"],
+    ["D", "G", "A#"],
+    ["D", "G", "B"],
+    ["D#", "F#", "A#"],
+    ["D#", "F#", "B"],
+    ["D#", "G", "A#"],
+    ["D#", "G#", "B"],
+    ["E", "G", "B"],
+    ["E", "G#", "B"]
+  ]
+
+type Tone = ℤ / 12
+
+noteMap :: Map.Map Tone String
+noteMap =
+  let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+   in Map.fromList $ zip [0 .. 11] notes
+
+noteMap' :: Map.Map String Tone
+noteMap' =
+  let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+   in Map.fromList $ zip notes [0 .. 11]
+
+hasEdge :: TriadNodeLabel -> TriadNodeLabel -> Bool
+hasEdge triad1 triad2 =
+  let sharedNotes = DL.intersect triad1 triad2
+   in length sharedNotes == 2
+
+findMates :: [TriadNodeLabel] -> TriadNodeLabel -> [TriadNodeLabel]
+findMates triads triad = DL.filter (hasEdge triad) triads
+
+nodeLookup :: Map.Map TriadNodeLabel Int
 nodeLookup =
-  let notesWithIndex = zip allNotes [0 ..]
-   in Map.fromList notesWithIndex
+  let nodesWithIndex = zip notetriads [0 ..]
+   in Map.fromList nodesWithIndex
 
-nodeLookup' :: Map.Map Int NodeLabel
-nodeLookup' =
-  let notesWithIndex = zip [0 ..] allNotes
-   in Map.fromList notesWithIndex
+neighborChords =
+  let cfinder = findMates notetriads
+   in map cfinder notetriads
 
-toneGraph :: Graph gr => gr NodeLabel EdgeLabel
-toneGraph =
-  let nodes = zip [0 ..] allNotes -- the index is required for the graph
-      es = concatMap (\(x, y) -> fromMaybe [] (intervalEdges toneMatrix (x, y))) intcords
-      edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, 0)) es
-   in mkGraph nodes edges
+makePairs :: a -> [a] -> [(a, a)]
+makePairs item friends = map (\f -> (f, item)) friends
 
-commonNeighbors :: NoteGraph -> Edge -> [Int]
-commonNeighbors g (from, to) =
-  let n1 = neighbors g from
-      n2 = neighbors g to
-   in DL.intersect n1 n2
+triadEdges :: [([String], [String])]
+triadEdges =
+  let es = map (\t -> (t, findMates notetriads t)) notetriads
+      pairs = concatMap (\(triad, mates) -> makePairs triad mates) es
+   in pairs
 
-makeThreeTuples :: Edge -> [Int] -> [(Int, Int, Int)]
-makeThreeTuples (from, to) ns = map (\x -> (from, to, x)) ns
+-- triadGraph :: Graph gr => gr TriadNodeLabel TriadEdgeLabel
+-- triadGraph = mkGraph nodes es
+--   where
+--     nodes = zip [0 ..] notetriads
+--     es = triadEdges
 
--- given a graph, will return all the 3-cliques
--- 1. for each edge in the graph
--- 2. for both vertices in the edge
--- 3. find the neighbor vertices in common
--- 4 for each neighbor vertex in common, record a 3-tuple of the vertices in the edge + the common neighbor
--- 5. sort each 3-tuple by value
--- 6. dedupe the list
--- threeClicks :: NoteGraph -> [[String]]
-threeClicks g =
-  let es = edges g
-      ns = map (\edge -> (edge, commonNeighbors g edge)) es
-      untuple (a, b, c) = [a, b, c]
-      triads :: [(Int, Int, Int)] = concatMap (\(e, n) -> makeThreeTuples e n) ns
-      triadLists = map untuple triads
-      makeTones = map noteFromIndex
-      orderedTriads :: [[Int]] = map (DL.sort . makeTones) triadLists
-   in map showTriad $ sortUniq orderedTriads
+noteC :: Tone
+noteC = 0
 
-noteFromIndex :: Int -> Int
-noteFromIndex idx =
-  let (cord, tone) = nodeLookup' Map.! idx
-   in tone
+noteA :: Tone
+noteA = 9
 
-noteFromTone :: Int -> String
-noteFromTone idx = noteMap Map.! idx
+noteE :: Tone
+noteE = 4
 
-showTriad :: [Int] -> [String]
-showTriad ns = map noteFromTone ns
+noteF :: Tone
+noteF = 5
 
--- showTriad (a, b, c) =
---   let a' = nodeLookup' Map.! a -- from index to coordinate
---       b' = nodeLookup' Map.! b
---       c' = nodeLookup' Map.! c
---       n1 = getNote toneMatrix $ fst a' -- from coordinate to tone
---       n2 = getNote toneMatrix $ fst b'
---       n3 = getNote toneMatrix $ fst c'
---       tones = catMaybes [n1, n2, n3]
---    in map (\x -> noteMap Map.! (snd x)) tones
+toneInterval :: Tone -> Tone -> Tone
+toneInterval a b = a - b
 
-myNeighbors :: NoteGraph -> NodeLabel -> [NodeLabel]
-myNeighbors tg i =
-  let i' = nodeLookup Map.! i
-      ns = neighbors tg i'
-   in map (\x -> nodeLookup' Map.! x) ns
+sortThree :: Tone -> Tone -> Tone -> (Tone, Tone, Tone)
+sortThree a b c =
+  let sorted = DL.sort [a, b, c]
+      x = head sorted
+      y = head $ drop 1 sorted
+      z = last sorted
+   in (x, y, z)
 
-justNotes :: (RealFrac a, Enum a) => [NodeLabel] -> [((a, a), Int)]
-justNotes notes =
-  map (\(xy, n) -> (realTuple xy, n)) notes
+isMajor' :: Tone -> Tone -> Tone -> Bool
+isMajor' x y z =
+  let (a, b, c) = sortThree x y z
+      i1 = abs $ c - b
+      i2 = abs $ c - a
+      i3 = abs $ b - a
+      intervals = [i1, i2, i3]
+      hasMajorThird = DL.elem 4 intervals
+      hasPerfectFifth = (DL.elem 7 intervals) || (DL.elem 5 intervals)
+   in hasMajorThird && hasPerfectFifth
 
-circleAtPoint :: ((Double, Double), Int) -> Diagram B
-circleAtPoint ((x, y), n) =
-  let noteName = noteMap Map.! n -- unsafe!
-   in ( circle 0.75
-          <> (center $ text $ noteName)
-      )
-        # translate (r2 (x, y))
+isMinor' :: Tone -> Tone -> Tone -> Bool
+isMinor' x y z =
+  let (a, b, c) = sortThree x y z
+      i1 = abs $ c - b
+      i2 = abs $ c - a
+      i3 = abs $ b - a
+      intervals = [i1, i2, i3]
+      hasMinorThird = DL.elem 3 intervals
+      hasPerfectFifth = (DL.elem 7 intervals) || (DL.elem 5 intervals)
+   in hasMinorThird && hasPerfectFifth
+
+isMajor :: String -> String -> String -> Bool
+isMajor a b c =
+  let a' = noteMap' Map.! a
+      b' = noteMap' Map.! b
+      c' = noteMap' Map.! c
+   in isMajor' a' b' c'
+
+isMinor :: String -> String -> String -> Bool
+isMinor a b c =
+  let a' = noteMap' Map.! a
+      b' = noteMap' Map.! b
+      c' = noteMap' Map.! c
+   in isMinor' a' b' c'
 
 main :: IO ()
-main = mainWith field
-  where
-    notes = justNotes allNotes
-    cs = map circleAtPoint notes
-    cords = map fst notes
-    points = map p2 cords
-    field = position $ zip points cs
+main = print neighborChords

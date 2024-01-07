@@ -38,11 +38,6 @@ netlines =
     [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0]
   ]
 
-noteMap :: Map.Map Int String
-noteMap =
-  let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-   in Map.fromList $ zip [0 .. 11] notes
-
 evens :: [a] -> [a]
 evens xs = [x | (x, index) <- zip xs [0 ..], even index]
 
@@ -108,19 +103,3 @@ realTuple (x, y) = (fromIntegral x, fromIntegral y)
 
 intcords :: [(Int, Int)]
 intcords = map floorTuple coordinates
-
-isMinor :: Int -> Int -> Int -> Bool
-isMinor a b c =
-  let firstInterval = abs (a - b)
-      secondInterval = abs (b - c)
-      thirdInterval = abs (a - c)
-      sortedIntervals = DL.sort [firstInterval, secondInterval, thirdInterval]
-   in sortedIntervals == [3, 5, 8]
-
-isMajor :: Int -> Int -> Int -> Bool
-isMajor a b c =
-  let firstInterval = abs (a - b)
-      secondInterval = abs (b - c)
-      thirdInterval = abs (a - c)
-      sortedIntervals = DL.sort [firstInterval, secondInterval, thirdInterval]
-   in sortedIntervals == [4, 5, 9]
