@@ -6,18 +6,19 @@
 
 module Main where
 
+import Data.Graph.Inductive (Graph (match))
 import qualified Data.Graph.Inductive as G
 import qualified Data.List as DL
 import Data.List.Unique (sortUniq)
 import qualified Data.Map as Map
 import Data.Modular (ℤ, type (/))
 
-data TriadicTransform = Leading | Relative | Parallel deriving (Show)
+data TriadicTransform = Leading | Relative | Parallel deriving (Show, Eq)
 
 -- | Slide | Nebenverwandt | Hexpole
 type TriadNodeLabel = [String] -- the node is the set of notes in the triad
 
-type TriadEdgeLabel = Int -- the edge is the difference in magnitude of the tone being swapped
+type TriadEdgeLabel = TriadicTransform -- the edge is the difference in magnitude of the tone being swapped
 -- out compared to the tone being swapped in
 
 type TriadGraph = G.Gr TriadNodeLabel TriadEdgeLabel
@@ -108,32 +109,27 @@ triadEdges =
       pairs = concatMap (\(triad, mates) -> makePairs triad mates) es
    in pairs
 
+makeTriadEdge :: TriadNodeLabel -> TriadNodeLabel -> (Int, Int, TriadicTransform)
+makeTriadEdge from to =
+  let fromIdx = nodeLookup Map.! from
+      toIdx = nodeLookup Map.! to
+      edgelabel = findChanged' from to
+   in (fromIdx, toIdx, edgelabel)
+
 triadGraph :: TriadGraph
 triadGraph = G.mkGraph nodes edges
   where
     nodes = zip [0 ..] notetriads
-    edges = map (\(a, b) -> (nodeLookup Map.! a, nodeLookup Map.! b, 0)) triadEdges
+    edges = map (uncurry makeTriadEdge) triadEdges
 
 triadFinder :: Int -> TriadNodeLabel
 triadFinder idx = nodeLookup' Map.! idx
 
-findNeighbors :: [String] -> [TriadNodeLabel]
+findNeighbors :: TriadNodeLabel -> [TriadNodeLabel]
 findNeighbors triad =
   let tidx = nodeLookup Map.! triad
       ns = sortUniq $ G.neighbors triadGraph tidx
    in map triadFinder ns
-
-noteC :: Tone
-noteC = 0
-
-noteA :: Tone
-noteA = 9
-
-noteE :: Tone
-noteE = 4
-
-noteF :: Tone
-noteF = 5
 
 toneInterval :: Tone -> Tone -> Tone
 toneInterval a b = a - b
@@ -181,33 +177,47 @@ describeTransform t1 t2 =
       rootDiffers = r1 /= r2
    in makeTxform delta rootDiffers
 
-isMajor' :: Tone -> Tone -> Tone -> Bool
-isMajor' x y z =
-  let (a, b, c) = sortThree x y z
-      i1 = abs $ b - a
-      i2 = abs $ c - a
-   in (i1, i2) == (4, 7)
+-- isMajor' :: Tone -> Tone -> Tone -> Bool
+-- isMajor' x y z =
+--   let (a, b, c) = sortThree x y z
+--       i1 = abs $ b - a
+--       i2 = abs $ c - a
+--    in (i1, i2) == (4, 7)
 
-isMinor' :: Tone -> Tone -> Tone -> Bool
-isMinor' x y z =
-  let (a, b, c) = sortThree x y z
-      i1 = abs $ b - a
-      i2 = abs $ c - a
-   in (i1, i2) == (3, 7)
+-- isMinor' :: Tone -> Tone -> Tone -> Bool
+-- isMinor' x y z =
+--   let (a, b, c) = sortThree x y z
+--       i1 = abs $ b - a
+--       i2 = abs $ c - a
+--    in (i1, i2) == (3, 7)
 
-isMajor :: String -> String -> String -> Bool
-isMajor a b c =
-  let a' = noteMap' Map.! a
-      b' = noteMap' Map.! b
-      c' = noteMap' Map.! c
-   in isMajor' a' b' c'
+-- isMajor :: String -> String -> String -> Bool
+-- isMajor a b c =
+--   let a' = noteMap' Map.! a
+--       b' = noteMap' Map.! b
+--       c' = noteMap' Map.! c
+--    in isMajor' a' b' c'
 
-isMinor :: String -> String -> String -> Bool
-isMinor a b c =
-  let a' = noteMap' Map.! a
-      b' = noteMap' Map.! b
-      c' = noteMap' Map.! c
-   in isMinor' a' b' c'
+-- isMinor :: String -> String -> String -> Bool
+-- isMinor a b c =
+--   let a' = noteMap' Map.! a
+--       b' = noteMap' Map.! b
+--       c' = noteMap' Map.! c
+--    in isMinor' a' b' c'
+
+third :: (a, b, c) -> c
+third (_, _, c) = c
+
+matchTriadicTransform :: TriadicTransform -> G.LEdge TriadEdgeLabel -> Bool
+matchTriadicTransform tx edge = third edge == tx
+
+makePath :: TriadicTransform -> TriadNodeLabel -> TriadNodeLabel
+makePath tx origin =
+  let originIdx = nodeLookup Map.! origin
+      edges = G.out triadGraph originIdx
+      matchingEdges = filter (matchTriadicTransform tx) edges
+      matchingNodes = map (\(from, to, label) -> nodeLookup' Map.! to) matchingEdges
+   in head matchingNodes
 
 main :: IO ()
 main = print neighborChords
