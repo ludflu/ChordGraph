@@ -50,9 +50,6 @@ notetriads =
     ["A", "C", "E"], -- A Minor
     ["A#", "C#", "F"], -- Bb Minor
     ["B", "D", "F#"] -- B Minor
-
-    --  ["G#","C#", "F"],  --note sure about this one
-    --  ["D#", "F#", "B"], --note sure about this one
   ]
 
 type Tone = ℤ / 12
@@ -237,12 +234,21 @@ slide = l . p . r
 hexapole :: TriadNodeLabel -> TriadNodeLabel
 hexapole = l . p . l
 
-nebenverwandt :: TriadNodeLabel -> TriadNodeLabel
-nebenverwandt = r . l . p
+-- nebenverwandt
+n :: TriadNodeLabel -> TriadNodeLabel
+n = r . l . p
+
+type TriadTraversal = TriadNodeLabel -> TriadNodeLabel
+
+findChordProgression :: TriadNodeLabel -> [TriadTraversal] -> [TriadNodeLabel]
+findChordProgression start [] = []
+findChordProgression start (hd : tl) =
+  let next = hd start
+   in next : findChordProgression next tl
 
 main :: IO ()
 main =
   let cmajor = ["C", "E", "G"]
-      path = p . r
-      next = path cmajor
-   in print [cmajor, next]
+      path = [p, r, l, slide, hexapole]
+      progression = findChordProgression cmajor path
+   in print progression
