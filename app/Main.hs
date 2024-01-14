@@ -219,5 +219,30 @@ makePath tx origin =
       matchingNodes = map (\(from, to, label) -> nodeLookup' Map.! to) matchingEdges
    in head matchingNodes
 
+p :: TriadNodeLabel -> TriadNodeLabel
+p = makePath Parallel
+
+r :: TriadNodeLabel -> TriadNodeLabel
+r = makePath Relative
+
+l :: TriadNodeLabel -> TriadNodeLabel
+l = makePath Leading
+
+prl :: TriadNodeLabel -> TriadNodeLabel
+prl = p . r . l
+
+slide :: TriadNodeLabel -> TriadNodeLabel
+slide = l . p . r
+
+hexapole :: TriadNodeLabel -> TriadNodeLabel
+hexapole = l . p . l
+
+nebenverwandt :: TriadNodeLabel -> TriadNodeLabel
+nebenverwandt = r . l . p
+
 main :: IO ()
-main = print neighborChords
+main =
+  let cmajor = ["C", "E", "G"]
+      path = p . r
+      next = path cmajor
+   in print [cmajor, next]
