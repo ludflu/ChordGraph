@@ -98,12 +98,12 @@ neighborChords =
    in map cfinder notetriads
 
 makePairs :: a -> [a] -> [(a, a)]
-makePairs item friends = map (\f -> (f, item)) friends
+makePairs item = map (\f -> (f, item))
 
 triadEdges :: [([String], [String])]
 triadEdges =
   let es = map (\t -> (t, findMates notetriads t)) notetriads
-      pairs = concatMap (\(triad, mates) -> makePairs triad mates) es
+      pairs = concatMap (uncurry makePairs) es
    in pairs
 
 makeTriadEdge :: TriadNodeLabel -> TriadNodeLabel -> (Int, Int, TriadicTransform)
@@ -135,7 +135,7 @@ sortThree :: Tone -> Tone -> Tone -> (Tone, Tone, Tone)
 sortThree a b c =
   let sorted = DL.sort [a, b, c]
       x = head sorted
-      y = head $ drop 1 sorted
+      y = sorted !! 1
       z = last sorted
    in (x, y, z)
 
@@ -154,8 +154,8 @@ findChanged t1 t2 =
   let as :: [Tone] = untuple t1
       bs :: [Tone] = untuple t2
       common :: [Tone] = DL.intersect as bs
-      tnote1 = filter (\n -> n `DL.notElem` common) as
-      tnote2 = filter (\n -> n `DL.notElem` common) bs
+      tnote1 = filter (`DL.notElem` common) as
+      tnote2 = filter (`DL.notElem` common) bs
       n1 = head tnote1
       n2 = head tnote2
    in toneInterval n2 n1
