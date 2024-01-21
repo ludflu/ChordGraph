@@ -284,14 +284,28 @@ shuffle xs = do
     newArray :: Int -> [a] -> IO (IOArray Int a)
     newArray n = newListArray (1, n)
 
+fisherYatesStep :: RandomGen g => (Map.Map Int a, g) -> (Int, a) -> (Map.Map Int a, g)
+fisherYatesStep (m, gen) (i, x) = ((Map.insert j x . Map.insert i (m Map.! j)) m, gen')
+  where
+    (j, gen') = randomR (0, i) gen
+
+fisherYates :: RandomGen g => g -> [a] -> ([a], g)
+fisherYates gen [] = ([], gen)
+fisherYates gen l =
+  toElems $ foldl fisherYatesStep (initial (head l) gen) (numerate (tail l))
+  where
+    toElems (x, y) = (Map.elems x, y)
+    numerate = zip [1 ..]
+    initial x gen = (Map.singleton 0 x, gen)
+
 transforms :: [TriadNodeLabel -> TriadNodeLabel]
-transforms = [p, r, l, slide, lp, pl, pr, rp, hexapole, nebenverwandt]
+transforms = [p, r, l, slide, lp, pl, pr, rp, hexapole]
 
 main :: IO ()
 main = do
-  gen <- newStdGen -- Create a new random generator
-  randomTransforms <- shuffle transforms
+  gen <- initStdGen
   let cmajor = ["C", "E", "G"]
-      path = take 4 transforms
+      (randomTransforms, _) = fisherYates gen transforms
+      path = take 4 randomTransforms
       progression = cmajor : findChordProgression cmajor path
   printFlat progression
