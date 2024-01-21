@@ -4,6 +4,7 @@
 
 module Main where
 
+import Control.Arrow
 import Control.Monad (forM)
 import Data.Array.IO
 import Data.Graph.Inductive (Graph (match))
@@ -11,10 +12,16 @@ import qualified Data.Graph.Inductive as G
 import qualified Data.List as DL
 import Data.List.Unique (sortUniq)
 import qualified Data.Map as Map
+import Data.Maybe
 import Data.Modular (ℤ, type (/))
 import System.Random
+  ( Random (randomR),
+    RandomGen,
+    mkStdGen,
+    randomRIO,
+  )
 
-data TriadicTransform = Leading | Relative | Parallel deriving (Show, Eq)
+data TriadicTransform = Leading | Relative | Parallel | Garbage deriving (Show, Eq)
 
 -- | Slide | Nebenverwandt | Hexpole
 type TriadNodeLabel = [String] -- the node is the set of notes in the triad
@@ -23,6 +30,8 @@ type TriadEdgeLabel = TriadicTransform -- the edge is the difference in magnitud
 -- out compared to the tone being swapped in
 
 type TriadGraph = G.Gr TriadNodeLabel TriadEdgeLabel
+
+type Transform = (TriadNodeLabel -> TriadNodeLabel)
 
 -- question: give a triad, is there a formula that will tell you if a give chord is minor or major?
 notetriads :: [[String]]
@@ -76,12 +85,12 @@ noteMap = Map.fromList $ zip [0 .. 11] notes
 noteMap' :: Map.Map String Tone
 noteMap' = Map.fromList $ zip notes [0 .. 11]
 
-mapTriad :: Triad -> [String]
-mapTriad (a, b, c) = [noteMap Map.! a, noteMap Map.! b, noteMap Map.! c]
+-- mapTriad :: Triad -> [String]
+-- mapTriad (a, b, c) = [noteMap Map.! a, noteMap Map.! b, noteMap Map.! c]
 
 mapTriad' :: [String] -> Triad
 mapTriad' notes =
-  let (a, b, c) = (head notes, notes !! 1, notes !! 2)
+  let (a, b, c) = (notes !! 0, notes !! 1, notes !! 2)
    in (noteMap' Map.! a, noteMap' Map.! b, noteMap' Map.! c)
 
 hasEdge :: TriadNodeLabel -> TriadNodeLabel -> Bool
@@ -110,7 +119,7 @@ makeTriadEdge :: TriadNodeLabel -> TriadNodeLabel -> (Int, Int, TriadicTransform
 makeTriadEdge from to =
   let fromIdx = nodeLookup Map.! from
       toIdx = nodeLookup Map.! to
-      edgelabel = findChanged' from to
+      edgelabel = fromMaybe Garbage $ findChanged' from to
    in (fromIdx, toIdx, edgelabel)
 
 triadGraph :: TriadGraph
@@ -131,76 +140,45 @@ findNeighbors triad =
 toneInterval :: Tone -> Tone -> Tone
 toneInterval a b = a - b
 
-sortThree :: Tone -> Tone -> Tone -> (Tone, Tone, Tone)
-sortThree a b c =
-  let sorted = DL.sort [a, b, c]
-      x = head sorted
-      y = sorted !! 1
-      z = last sorted
-   in (x, y, z)
-
 untuple :: Triad -> [Tone]
 untuple (a, b, c) = [a, b, c]
 
-findChanged' :: [String] -> [String] -> TriadicTransform
+findChanged' :: [String] -> [String] -> Maybe TriadicTransform
 findChanged' t1 t2 =
   let t1' = mapTriad' t1
       t2' = mapTriad' t2
       changeInterval = findChanged t1' t2'
    in describeTransform t1' t2'
 
-findChanged :: Triad -> Triad -> Tone
+findChanged :: Triad -> Triad -> Maybe Tone
 findChanged t1 t2 =
   let as :: [Tone] = untuple t1
       bs :: [Tone] = untuple t2
       common :: [Tone] = DL.intersect as bs
       tnote1 = filter (`DL.notElem` common) as
       tnote2 = filter (`DL.notElem` common) bs
-      n1 = head tnote1
-      n2 = head tnote2
-   in toneInterval n2 n1
+   in do
+        n1 <- listToMaybe tnote1
+        n2 <- listToMaybe tnote2
+        return $ toneInterval n2 n1
 
-makeTxform :: Tone -> Bool -> TriadicTransform
+makeTxform :: Tone -> Bool -> Maybe TriadicTransform
 makeTxform delta rootDiffers
-  | delta == 2 || delta == 10 = Relative
-  | (delta == 1 || delta == 11) && rootDiffers = Leading
-  | (delta == 1 || delta == 11) && not rootDiffers = Parallel
+  | delta == 2 || delta == 10 = Just Relative
+  | (delta == 1 || delta == 11) && rootDiffers = Just Leading
+  | (delta == 1 || delta == 11) && not rootDiffers = Just Parallel
+  | otherwise = Nothing
 
-describeTransform :: Triad -> Triad -> TriadicTransform
+describeTransform :: Triad -> Triad -> Maybe TriadicTransform
 describeTransform t1 t2 =
   let delta = findChanged t1 t2
       (r1, _, _) = t1
       (r2, _, _) = t2
       rootDiffers = r1 /= r2
-   in makeTxform delta rootDiffers
-
--- isMajor' :: Tone -> Tone -> Tone -> Bool
--- isMajor' x y z =
---   let (a, b, c) = sortThree x y z
---       i1 = abs $ b - a
---       i2 = abs $ c - a
---    in (i1, i2) == (4, 7)
-
--- isMinor' :: Tone -> Tone -> Tone -> Bool
--- isMinor' x y z =
---   let (a, b, c) = sortThree x y z
---       i1 = abs $ b - a
---       i2 = abs $ c - a
---    in (i1, i2) == (3, 7)
-
--- isMajor :: String -> String -> String -> Bool
--- isMajor a b c =
---   let a' = noteMap' Map.! a
---       b' = noteMap' Map.! b
---       c' = noteMap' Map.! c
---    in isMajor' a' b' c'
-
--- isMinor :: String -> String -> String -> Bool
--- isMinor a b c =
---   let a' = noteMap' Map.! a
---       b' = noteMap' Map.! b
---       c' = noteMap' Map.! c
---    in isMinor' a' b' c'
+   in do
+        d <- delta
+        tfm <- makeTxform d rootDiffers
+        return tfm
 
 third :: (a, b, c) -> c
 third (_, _, c) = c
@@ -208,6 +186,7 @@ third (_, _, c) = c
 matchTriadicTransform :: TriadicTransform -> G.LEdge TriadEdgeLabel -> Bool
 matchTriadicTransform tx edge = third edge == tx
 
+-- makePath :: TriadicTransform -> TriadNodeLabel -> Maybe TriadNodeLabel
 makePath :: TriadicTransform -> TriadNodeLabel -> TriadNodeLabel
 makePath tx origin =
   let originIdx = nodeLookup Map.! origin
@@ -215,6 +194,8 @@ makePath tx origin =
       matchingEdges = filter (matchTriadicTransform tx) edges
       matchingNodes = map (\(from, to, label) -> nodeLookup' Map.! to) matchingEdges
    in head matchingNodes
+
+--   in listToMaybe matchingNodes
 
 p :: TriadNodeLabel -> TriadNodeLabel
 p = makePath Parallel
@@ -229,33 +210,33 @@ l = makePath Leading
 -- starting from a minor chord: sinister
 -- magical1 / sinister
 lp :: TriadNodeLabel -> TriadNodeLabel
-lp = l . p
+lp = l >>> p
 
 -- starting from a major chord: magical
 -- starting from a minor chord: sinister
 -- magical2 / sinister2
 pl :: TriadNodeLabel -> TriadNodeLabel
-pl = p . l
+pl = p >>> l
 
 -- heroic1 / uncanny
 pr :: TriadNodeLabel -> TriadNodeLabel
-pr = p . r
+pr = p >>> r
 
 -- heroic2 / uncanny
 rp :: TriadNodeLabel -> TriadNodeLabel
-rp = r . p
+rp = r >>> p
 
 prl :: TriadNodeLabel -> TriadNodeLabel
-prl = p . r . l
+prl = p >>> r >>> l
 
 slide :: TriadNodeLabel -> TriadNodeLabel
-slide = l . p . r
+slide = l >>> p >>> r
 
 hexapole :: TriadNodeLabel -> TriadNodeLabel
-hexapole = l . p . l
+hexapole = l >>> p >>> l
 
 nebenverwandt :: TriadNodeLabel -> TriadNodeLabel
-nebenverwandt = r . l . p
+nebenverwandt = r >>> l >>> p
 
 type TriadTraversal = TriadNodeLabel -> TriadNodeLabel
 
@@ -299,13 +280,18 @@ fisherYates gen l =
     initial x gen = (Map.singleton 0 x, gen)
 
 transforms :: [TriadNodeLabel -> TriadNodeLabel]
-transforms = [p, r, l, slide, lp, pl, pr, rp, hexapole]
+transforms = [p, r, l, slide, lp, pl, pr, rp, hexapole, prl, nebenverwandt]
+
+transformNames = ["p", "r", "l", "slide", "lp", "pl", "pr", "rp", "hexapole", "prl", "nebenverwandt"]
 
 main :: IO ()
 main = do
-  gen <- initStdGen
-  let cmajor = ["C", "E", "G"]
+  let gen = mkStdGen 123
+      cmajor = ["C", "E", "G"]
       (randomTransforms, _) = fisherYates gen transforms
+      (randomTransformNames, _) = fisherYates gen transformNames
       path = take 4 randomTransforms
-      progression = cmajor : findChordProgression cmajor path
+      pathNames = take 4 randomTransformNames
+  print pathNames
+  let progression = cmajor : findChordProgression cmajor [pr, pl] -- path
   printFlat progression
