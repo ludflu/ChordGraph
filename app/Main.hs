@@ -294,5 +294,4 @@ main = do
   let cmajor = ["C", "E", "G"]
       path = take 4 transforms
       progression = cmajor : findChordProgression cmajor path
-  print $ length path
   printFlat progression
