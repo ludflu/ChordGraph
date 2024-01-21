@@ -37,12 +37,14 @@ executable tonnetz-haskell-graph
                      ,hashable
                      ,text
                      ,fgl
+                     ,random
                      ,filepath
                      ,matrix
                      ,diagrams-lib
                      ,diagrams-svg
                      ,Unique
                      ,modular-arithmetic
+                     ,array
             
     hs-source-dirs:   app
     default-language: Haskell2010

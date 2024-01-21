@@ -2,16 +2,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
--- module TriadGraph where
-
 module Main where
 
+import Control.Monad (forM)
+import Data.Array.IO
 import Data.Graph.Inductive (Graph (match))
 import qualified Data.Graph.Inductive as G
 import qualified Data.List as DL
 import Data.List.Unique (sortUniq)
 import qualified Data.Map as Map
 import Data.Modular (ℤ, type (/))
+import System.Random
 
 data TriadicTransform = Leading | Relative | Parallel deriving (Show, Eq)
 
@@ -66,15 +67,14 @@ nodeLookup' =
   let triadsWithIndex = zip [0 ..] notetriads
    in Map.fromList triadsWithIndex
 
+notes :: [String]
+notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
 noteMap :: Map.Map Tone String
-noteMap =
-  let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-   in Map.fromList $ zip [0 .. 11] notes
+noteMap = Map.fromList $ zip [0 .. 11] notes
 
 noteMap' :: Map.Map String Tone
-noteMap' =
-  let notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-   in Map.fromList $ zip notes [0 .. 11]
+noteMap' = Map.fromList $ zip notes [0 .. 11]
 
 mapTriad :: Triad -> [String]
 mapTriad (a, b, c) = [noteMap Map.! a, noteMap Map.! b, noteMap Map.! c]
@@ -254,9 +254,8 @@ slide = l . p . r
 hexapole :: TriadNodeLabel -> TriadNodeLabel
 hexapole = l . p . l
 
--- nebenverwandt
-n :: TriadNodeLabel -> TriadNodeLabel
-n = r . l . p
+nebenverwandt :: TriadNodeLabel -> TriadNodeLabel
+nebenverwandt = r . l . p
 
 type TriadTraversal = TriadNodeLabel -> TriadNodeLabel
 
@@ -269,9 +268,31 @@ findChordProgression start (hd : tl) =
 printFlat :: [[String]] -> IO ()
 printFlat ns = mapM_ putStrLn (concat ns)
 
+-- | Randomly shuffle a list
+--   /O(N)/
+shuffle :: [a] -> IO [a]
+shuffle xs = do
+  ar <- newArray n xs
+  forM [1 .. n] $ \i -> do
+    j <- randomRIO (i, n)
+    vi <- readArray ar i
+    vj <- readArray ar j
+    writeArray ar j vi
+    return vj
+  where
+    n = length xs
+    newArray :: Int -> [a] -> IO (IOArray Int a)
+    newArray n = newListArray (1, n)
+
+transforms :: [TriadNodeLabel -> TriadNodeLabel]
+transforms = [p, r, l, slide, lp, pl, pr, rp, hexapole, nebenverwandt]
+
 main :: IO ()
-main =
+main = do
+  gen <- newStdGen -- Create a new random generator
+  randomTransforms <- shuffle transforms
   let cmajor = ["C", "E", "G"]
-      path = [p, r, l, slide, lp, pl, pr, rp, hexapole]
+      path = take 4 transforms
       progression = cmajor : findChordProgression cmajor path
-   in printFlat progression
+  print $ length path
+  printFlat progression
