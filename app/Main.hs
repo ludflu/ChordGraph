@@ -81,7 +81,7 @@ mapTriad (a, b, c) = [noteMap Map.! a, noteMap Map.! b, noteMap Map.! c]
 
 mapTriad' :: [String] -> Triad
 mapTriad' notes =
-  let (a, b, c) = (notes !! 0, notes !! 1, notes !! 2)
+  let (a, b, c) = (head notes, notes !! 1, notes !! 2)
    in (noteMap' Map.! a, noteMap' Map.! b, noteMap' Map.! c)
 
 hasEdge :: TriadNodeLabel -> TriadNodeLabel -> Bool
@@ -225,6 +225,26 @@ r = makePath Relative
 l :: TriadNodeLabel -> TriadNodeLabel
 l = makePath Leading
 
+-- starting from a major chord: magical
+-- starting from a minor chord: sinister
+-- magical1 / sinister
+lp :: TriadNodeLabel -> TriadNodeLabel
+lp = l . p
+
+-- starting from a major chord: magical
+-- starting from a minor chord: sinister
+-- magical2 / sinister2
+pl :: TriadNodeLabel -> TriadNodeLabel
+pl = p . l
+
+-- heroic1 / uncanny
+pr :: TriadNodeLabel -> TriadNodeLabel
+pr = p . r
+
+-- heroic2 / uncanny
+rp :: TriadNodeLabel -> TriadNodeLabel
+rp = r . p
+
 prl :: TriadNodeLabel -> TriadNodeLabel
 prl = p . r . l
 
@@ -249,6 +269,6 @@ findChordProgression start (hd : tl) =
 main :: IO ()
 main =
   let cmajor = ["C", "E", "G"]
-      path = [p, r, l, slide, hexapole]
-      progression = findChordProgression cmajor path
+      path = [p, r, l, slide, lp, pl, pr, rp, hexapole]
+      progression = cmajor : findChordProgression cmajor path
    in print progression

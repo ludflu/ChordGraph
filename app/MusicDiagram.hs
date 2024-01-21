@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-module MainOld where
+module MusicDiagram where
 
 import Data.Data (Typeable)
 import Data.Graph.Inductive (Edge, Gr, Graph (mkGraph), Node, edges, neighbors)
