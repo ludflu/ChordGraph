@@ -266,9 +266,12 @@ findChordProgression start (hd : tl) =
   let next = hd start
    in next : findChordProgression next tl
 
+printFlat :: [[String]] -> IO ()
+printFlat ns = mapM_ putStrLn (concat ns)
+
 main :: IO ()
 main =
   let cmajor = ["C", "E", "G"]
       path = [p, r, l, slide, lp, pl, pr, rp, hexapole]
       progression = cmajor : findChordProgression cmajor path
-   in print progression
+   in printFlat progression
