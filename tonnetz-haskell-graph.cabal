@@ -29,9 +29,7 @@ executable tonnetz-haskell-graph
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    other-modules:    Tonnetz
-                     --,TriadGraph
-                     --
+    other-modules:    ChordGraph
     build-depends:    base ^>=4.16.4.0
                      ,containers
                      ,hashable
@@ -48,3 +46,24 @@ executable tonnetz-haskell-graph
             
     hs-source-dirs:   app
     default-language: Haskell2010
+
+
+Test-Suite tonnetez-tests
+  type: exitcode-stdio-1.0
+--   other-modules: Main
+  build-depends:    base
+                    ,containers
+                    ,hashable
+                    ,text
+                    ,fgl
+                    ,random
+                    ,filepath
+                    ,matrix
+                    ,Unique
+                    ,modular-arithmetic
+                    ,array
+                    ,tasty
+                    ,tasty-hunit
+  hs-source-dirs:
+      tests
+  main-is: TonnetzTests.hs
