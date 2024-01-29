@@ -32,46 +32,51 @@ type TriadGraph = G.Gr TriadNodeLabel TriadEdgeLabel
 
 type Transform = (TriadNodeLabel -> TriadNodeLabel)
 
+type Tone = ℤ / 12
+
+-- notes :: [String]
+-- notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
 notes :: [String]
-notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+notes = [c, cs, d, ds, e, f, fs, g, gs, a, as, b]
 
-c = 0
+c = "C"
 
-cs = 1
+cs = "C#"
 
-d = 2
+d = "D"
 
 db = cs
 
-ds = 3
+ds = "D#"
 
 eb = ds
 
-e = 4
+e = "E"
 
 fb = e
 
-f = 5
+f = "F"
 
 es = f
 
-fs = 6
+fs = "F#"
 
 gb = fs
 
-g = 7
+g = "G"
 
-gs = 8
+gs = "G#"
 
 ab = gs
 
-a = 9
+a = "A"
 
-as = 10
+as = "A#"
 
 bb = as
 
-b = 11
+b = "B"
 
 bs = c
 
@@ -79,34 +84,42 @@ cb = b
 
 notetriads :: [[String]]
 notetriads =
-  [ ["C", "E", "G"], -- CMAJOR
-    ["C#", "E#", "G#"], -- C# MAJOR
-    ["D", "F#", "A"], -- D MAJOR
-    ["D#", "G", "A#"], -- Eb Major  ---DEBUG START HERE FOR ERROR the PL
-    ["E", "G#", "B"], -- E Major
-    ["F", "A", "C"], -- F Major
-    ["F#", "A#", "C#"], -- F# Major
-    ["G", "D", "B"], -- G Major
-    ["G#", "C", "D#"], -- Ab Major
-    ["A", "C#", "E"], -- A Major
-    ["A#", "D", "F"], -- Bb Major
-    ["B", "D#", "F#"], -- B Major
-    ["C", "D#", "G"], -- C Minor
-    ["C#", "E", "G#"], -- C # Minor
-    ["D", "F", "A"], -- D Minor
-    ["D#", "G", "A#"], -- Eb Major
-    ["D#", "F#", "A#"], -- Eb Minor ????
-    ["E", "G", "B"], -- E Minor
-    ["F", "G#", "C"], -- F Minor
-    ["F#", "A", "C#"], -- F# Minor
-    ["G", "A#", "D"], -- G Minor
-    ["G#", "B", "D#"], -- Ab Minor
-    ["A", "C", "E"], -- A Minor
-    ["A#", "C#", "F"], -- Bb Minor
-    ["B", "D", "F#"] -- B Minor
-  ]
-
-type Tone = ℤ / 12
+  sortUniq
+    [ [c, e, g], -- CMAJOR
+      [cs, es, gs], -- C# MAJOR
+      [db, f, ab], -- Db Major
+      [d, fs, a], -- D MAJOR
+      [ds, g, as], -- D# MAJOR
+      [eb, g, bb], -- Eb Major
+      [e, gs, b], -- E Major
+      [f, a, c], -- F Major
+      [fs, as, cs], -- F# Major
+      [gb, bb, db], -- Gb Major
+      [g, b, d], -- G Major
+      [gs, bs, ds], -- G# Major
+      [ab, c, eb], -- Ab Major
+      [a, cs, e], -- A Major
+      [as, d, es], -- A# Major
+      [bb, d, f], -- Bb Major
+      [b, ds, fs], -- B Major
+      [c, eb, g], -- C Minor
+      [cs, e, gs], -- C# minor
+      [db, fb, ab], -- Db Minor
+      [d, f, a], -- D Minor
+      [ds, fs, as], -- D# Minor
+      [eb, gb, bb], -- Eb Minor
+      [e, g, b], -- E Minor
+      [f, ab, c], -- F Minor
+      [fs, a, cs], -- F# Minor
+      [gb, a, db], -- Gb Minor
+      [g, bb, d], -- G Minor
+      [gs, b, ds], -- G# Minor
+      [ab, cb, eb], -- Ab Minor
+      [a, c, e], -- A Minor
+      [as, cs, es], -- A# Minor
+      [bb, db, f], -- Bb Minor
+      [b, d, fs] -- B Minor
+    ]
 
 type Triad = (Tone, Tone, Tone)
 
