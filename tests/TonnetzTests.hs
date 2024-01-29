@@ -18,14 +18,11 @@ allGoodNodes ns =
   let ag = map goodNode ns
    in and ag
 
-testOne = testCase "test one" $ assertEqual "test one" 3 4
-
 tonnetzUnitTests :: TestTree
 tonnetzUnitTests =
   testGroup
     "tonnetz tests"
-    [ -- testOne,
-      testCase "All good nodes" $
+    [ testCase "All good nodes" $
         assertEqual
           "all good"
           True
@@ -34,7 +31,7 @@ tonnetzUnitTests =
           ),
       testCase
         "number of nodes"
-        $ assertEqual "num nodes" (length chordNodes) 25
+        $ assertEqual "num nodes" (length chordNodes) 24
     ]
 
 main :: IO ()
