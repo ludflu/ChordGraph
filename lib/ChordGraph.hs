@@ -94,8 +94,8 @@ notetriads =
     ["C", "D#", "G"], -- C Minor
     ["C#", "E", "G#"], -- C # Minor
     ["D", "F", "A"], -- D Minor
-    ["D#", "F#", "A#"], -- Eb Minor
-    ["D#", "F#", "B"], -- Eb Minor ????
+    ["D#", "G", "A#"], -- Eb Major
+    ["D#", "F#", "A#"], -- Eb Minor ????
     ["E", "G", "B"], -- E Minor
     ["F", "G#", "C"], -- F Minor
     ["F#", "A", "C#"], -- F# Minor
