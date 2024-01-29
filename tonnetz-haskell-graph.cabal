@@ -44,13 +44,13 @@ executable tonnetz-haskell-graph
                      ,modular-arithmetic
                      ,array
             
-    hs-source-dirs:   app
+    hs-source-dirs:   app, lib
     default-language: Haskell2010
 
 
 Test-Suite tonnetez-tests
   type: exitcode-stdio-1.0
---   other-modules: Main
+  other-modules: ChordGraph
   build-depends:    base
                     ,containers
                     ,hashable
@@ -65,5 +65,5 @@ Test-Suite tonnetez-tests
                     ,tasty
                     ,tasty-hunit
   hs-source-dirs:
-      tests
+      tests, lib
   main-is: TonnetzTests.hs
