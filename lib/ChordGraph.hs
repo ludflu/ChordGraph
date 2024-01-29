@@ -80,7 +80,7 @@ cb = b
 notetriads :: [[String]]
 notetriads =
   [ ["C", "E", "G"], -- CMAJOR
-    ["C#", "E#", "G#"], -- C# MAJOR  --ZERO EDGES TODO
+    ["C#", "E#", "G#"], -- C# MAJOR
     ["D", "F#", "A"], -- D MAJOR
     ["D#", "G", "A#"], -- Eb Major  ---DEBUG START HERE FOR ERROR the PL
     ["E", "G#", "B"], -- E Major
@@ -90,7 +90,7 @@ notetriads =
     ["G#", "C", "D#"], -- Ab Major
     ["A", "C#", "E"], -- A Major
     ["A#", "D", "F"], -- Bb Major
-    ["B", "D#", "G#"], -- B Major
+    ["B", "D#", "F#"], -- B Major
     ["C", "D#", "G"], -- C Minor
     ["C#", "E", "G#"], -- C # Minor
     ["D", "F", "A"], -- D Minor
