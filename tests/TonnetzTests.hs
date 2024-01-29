@@ -1,17 +1,23 @@
 module Main where
 
-import ChordGraph (triadGraph)
+import ChordGraph (TriadicTransform (Leading, Parallel, Relative), triadGraph)
 import Data.Foldable
 import qualified Data.Graph.Inductive as G
+import Data.List.Unique (sortUniq)
 import Test.Tasty (TestTree, defaultMain, testGroup)
 import Test.Tasty.HUnit (assertBool, assertEqual, testCase)
 
 chordNodes = G.nodes triadGraph
 
+third :: (a, b, c) -> c
+third (a, b, c) = c
+
+-- a node is good if it has exactly three neighbors and the edges are labeled correctly
 goodNode :: G.Node -> Bool
 goodNode n =
   let es = G.out triadGraph n
-   in length es == 3
+      lbls = sortUniq $ map third es
+   in length es == 3 && lbls == [Leading, Relative, Parallel]
 
 allGoodNodes :: [G.Node] -> Bool
 allGoodNodes ns =

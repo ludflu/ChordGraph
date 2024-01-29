@@ -20,7 +20,7 @@ import System.Random
     randomRIO,
   )
 
-data TriadicTransform = Leading | Relative | Parallel | Garbage deriving (Show, Eq)
+data TriadicTransform = Leading | Relative | Parallel | Garbage deriving (Show, Eq, Ord)
 
 -- | Slide | Nebenverwandt | Hexpole
 type TriadNodeLabel = [String] -- the node is the set of notes in the triad
